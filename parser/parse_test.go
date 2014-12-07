@@ -5,7 +5,6 @@
 package sqlparser
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -18,11 +17,10 @@ func TestGen(t *testing.T) {
 
 func TestParse(t *testing.T) {
 	sql := "select a from (select * from table1 where table1.a = 'tom') as t1, table2, table3 as t3, table4 left join table5 where t1.k = '1'"
-	tree, err := Parse(sql)
+	_, err := Parse(sql)
 	if err != nil {
 		t.Fatal(err)
 	}
-	fmt.Println(String(tree))
 }
 
 func BenchmarkParse1(b *testing.B) {
