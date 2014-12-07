@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/xwb1989/sql_parser/dependents/sqltypes"
+	"github.com/xwb1989/sql_parser/dependency/sqltypes"
 )
 
 const EOFCHAR = 0x100

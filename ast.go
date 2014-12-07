@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/xwb1989/sql_parser/dependents/sqltypes"
+	"github.com/xwb1989/sql_parser/dependency/sqltypes"
 )
 
 // Instructions for creating new types: If a type

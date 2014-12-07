@@ -25,13 +25,3 @@ func TestRewriteQuery(t *testing.T) {
 
 	assert.Equal(t, expected, actual)
 }
-
-func TestParseDDL(t *testing.T) {
-	sql := "create table table1 (c1 integer primary, c2 char(8), c3 text)"
-	tree, err := Parse(sql)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	fmt.Println(String(tree))
-}
