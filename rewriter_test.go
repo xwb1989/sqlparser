@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestRewrite(t *testing.T) {
+func TestRewriteQuery(t *testing.T) {
 	sql := "select distinct table1.* from table1 as t1"
 	tree, _ := Parse(sql)
 
@@ -24,4 +24,14 @@ func TestRewrite(t *testing.T) {
 	actual := String(tree)
 
 	assert.Equal(t, expected, actual)
+}
+
+func TestParseDDL(t *testing.T) {
+	sql := "create table table1 (c1 integer primary, c2 char(8), c3 text)"
+	tree, err := Parse(sql)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	fmt.Println(String(tree))
 }
