@@ -6,3 +6,9 @@ Inside youtube/vitess there is a very nicely written sql parser, but it's not a 
 
 ##What's More In this REPO
 
+Rewrite SQL Queries by self-defined rewriter
+
+##What's Next
+
+Schema parsing
+
