@@ -65,7 +65,7 @@ var (
 }
 
 %token LEX_ERROR
-%token <empty> SELECT INSERT UPDATE DELETE FROM WHERE GROUP HAVING ORDER BY LIMIT FOR
+%token <empty> SELECT INSERT UPDATE DELETE FROM WHERE GROUP HAVING ORDER BY LIMIT FOR PRIMARY
 %token <empty> ALL DISTINCT AS EXISTS IN IS LIKE BETWEEN NULL ASC DESC VALUES INTO DUPLICATE KEY DEFAULT SET LOCK
 %token <bytes> ID STRING NUMBER VALUE_ARG LIST_ARG COMMENT
 %token <empty> LE GE NE NULL_SAFE_EQUAL
@@ -83,7 +83,7 @@ var (
 %left <empty> '*' '/' '%'
 %nonassoc <empty> '.'
 %left <empty> UNARY
-%right <empty> CASE, WHEN, THEN, ELSE
+%right <empty> CASE WHEN THEN ELSE
 %left <empty> END
 
 // DDL Tokens
@@ -130,7 +130,7 @@ var (
 %type <when> when_expression
 %type <valExpr> value_expression_opt else_expression_opt
 %type <valExprs> group_by_opt
-%type <boolExpr> having_opt
+%type <boolExpr> having_opt primary_key_opt
 %type <orderBy> order_by_opt order_list
 %type <order> order
 %type <str> asc_desc_opt
@@ -143,6 +143,14 @@ var (
 %type <empty> exists_opt not_exists_opt ignore_opt non_rename_operation to_opt constraint_opt using_opt
 %type <bytes> sql_id
 %type <empty> force_eof
+
+/*
+Below are modification to extract primary key
+*/
+%token <bytes> column_type 
+%type <ColumnsDefinitions> column_definition_list
+%type <ColumnsDefinition> column_definition
+%type <statement> create_table_statement
 
 %%
 
@@ -212,10 +220,41 @@ set_statement:
     $$ = &Set{Comments: Comments($2), Exprs: $3}
   }
 
-create_statement:
-  CREATE TABLE not_exists_opt ID force_eof
+primary_key_opt: 
   {
-    $$ = &DDL{Action: AST_CREATE, NewName: $4}
+    $$ = false
+  }
+| PRIMARY KEY 
+  {
+    $$ = true
+  }
+
+column_definition:
+  column_name column_type primary_key_opt
+  {
+    $$ = &ColumnDefinition{ColName: $1, ColType: $2, IsPrimaryKey: $3}
+  }
+  
+column_definition_list:
+  column_definition
+  {
+    $$ = ColumnsDefinitions{&$1}
+  }
+| column_definition_list ',' column_definition
+  {
+    $$ = append($1, $3)
+  }
+
+create_table_statement:
+  CREATE TABLE not_exists_opt ID '(' column_definition_list  ')' force_eof
+  {
+    $$ = &CreateTable{Name: $4, ColumnsDefinitions: $6}  
+  }
+
+create_statement:
+  create_table_statement
+  {
+    $$ = $1
   }
 | CREATE constraint_opt INDEX sql_id using_opt ON ID force_eof
   {

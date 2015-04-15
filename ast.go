@@ -200,6 +200,23 @@ type DDL struct {
 	NewName []byte
 }
 
+type ColumnDefinition struct {
+	ColName      []byte
+	ColType      []byte
+	IsPrimarykey bool
+}
+type ColumnDefinitions []ColumnDefinition
+
+type CreateTable struct {
+	Name              []byte
+	ColumnDefinitions ColumnDefinitions
+}
+
+const (
+	AST_TABLE = "table"
+	AST_VIEW  = "view"
+)
+
 const (
 	AST_CREATE = "create"
 	AST_ALTER  = "alter"
