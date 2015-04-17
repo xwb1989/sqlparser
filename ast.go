@@ -203,8 +203,9 @@ type DDL struct {
 type ColumnDefinition struct {
 	ColName      []byte
 	ColType      []byte
-	IsPrimarykey bool
+	IsPrimaryKey string
 }
+
 type ColumnDefinitions []ColumnDefinition
 
 type CreateTable struct {
@@ -212,9 +213,18 @@ type CreateTable struct {
 	ColumnDefinitions ColumnDefinitions
 }
 
+func (node *CreateTable) Format(buf *TrackedBuffer) {
+	//TODO need to implement this method
+}
+func (node *CreateTable) IStatement() {}
+
 const (
 	AST_TABLE = "table"
 	AST_VIEW  = "view"
+)
+
+const (
+	AST_PRIMARY_KEY = "primary key"
 )
 
 const (

@@ -62,6 +62,10 @@ var (
   insRows     InsertRows
   updateExprs UpdateExprs
   updateExpr  *UpdateExpr
+
+  createTableStmt CreateTable
+  columnDefinition ColumnDefinition
+  columnDefinitions []ColumnDefinition
 }
 
 %token LEX_ERROR
@@ -130,7 +134,7 @@ var (
 %type <when> when_expression
 %type <valExpr> value_expression_opt else_expression_opt
 %type <valExprs> group_by_opt
-%type <boolExpr> having_opt primary_key_opt
+%type <boolExpr> having_opt 
 %type <orderBy> order_by_opt order_list
 %type <order> order
 %type <str> asc_desc_opt
@@ -147,10 +151,12 @@ var (
 /*
 Below are modification to extract primary key
 */
-%token <bytes> column_type 
-%type <ColumnsDefinitions> column_definition_list
-%type <ColumnsDefinition> column_definition
+%token <bytes> column_definition_type 
+%token <bytes> column_definition_name
+%type <columnDefinition> column_definition
+%type <columnDefinitions> column_definition_list
 %type <statement> create_table_statement
+%type <str> primary_key_opt
 
 %%
 
@@ -222,23 +228,23 @@ set_statement:
 
 primary_key_opt: 
   {
-    $$ = false
+    $$ = ""
   }
 | PRIMARY KEY 
   {
-    $$ = true
+    $$ = AST_PRIMARY_KEY
   }
 
 column_definition:
-  column_name column_type primary_key_opt
+  column_definition_name column_definition_type primary_key_opt
   {
-    $$ = &ColumnDefinition{ColName: $1, ColType: $2, IsPrimaryKey: $3}
+    $$ = ColumnDefinition{ColName: $1, ColType: $2, IsPrimaryKey: $3  }
   }
   
 column_definition_list:
   column_definition
   {
-    $$ = ColumnsDefinitions{&$1}
+    $$ = ColumnDefinitions{$1}
   }
 | column_definition_list ',' column_definition
   {
@@ -248,7 +254,7 @@ column_definition_list:
 create_table_statement:
   CREATE TABLE not_exists_opt ID '(' column_definition_list  ')' force_eof
   {
-    $$ = &CreateTable{Name: $4, ColumnsDefinitions: $6}  
+    $$ = &CreateTable{Name: $4, ColumnDefinitions: $6}  
   }
 
 create_statement:
