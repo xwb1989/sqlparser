@@ -6,6 +6,7 @@
 package sqlparser
 
 import "bytes"
+import "fmt"
 
 func SetParseTree(yylex interface{}, stmt Statement) {
   yylex.(*Tokenizer).ParseTree = stmt
@@ -151,12 +152,17 @@ var (
 /*
 Below are modification to extract primary key
 */
-%token <bytes> column_definition_type 
-%token <bytes> column_definition_name
+%type <str> data_type
 %type <columnDefinition> column_definition
 %type <columnDefinitions> column_definition_list
 %type <statement> create_table_statement
 %type <str> primary_key_opt
+/*
+Datatypes
+*/
+%token <bytes> BIT TINYINT SMALLINT MEDIUMINT INT INTEGER BIGINT REAL DOUBLE FLOAT UNSIGNED
+%type <str> length_opt char_type numeric_type unsigned_opt
+
 
 %%
 
@@ -226,18 +232,75 @@ set_statement:
     $$ = &Set{Comments: Comments($2), Exprs: $3}
   }
 
+data_type:
+  numeric_type 
+  {
+  //TODO
+  }
+| char_type
+  {
+  //TODO
+  }
+
+char_type:
+  {
+  //TODO
+  }
+numeric_type:
+  BIT length_opt unsigned_opt
+  {
+  }
+| TINYINT length_opt unsigned_opt
+  {
+  }
+| SMALLINT length_opt unsigned_opt
+  {
+  }
+| MEDIUMINT length_opt unsigned_opt
+  {
+  }
+| INT length_opt unsigned_opt
+  {
+  }
+| INTEGER length_opt unsigned_opt
+  {
+  }
+| BIGINT length_opt unsigned_opt
+  {
+  }
+
+length_opt:
+  {
+    $$ = ""
+  }
+| '(' NUMBER ')'  
+  {
+    $$ = fmt.Sprintf("(%v)", $2)
+  }
+
+unsigned_opt:
+  {
+    $$ = ""
+  }
+| UNSIGNED
+  {
+    $$ = AST_UNSIGNED
+  }
 primary_key_opt: 
   {
+    fmt.Println("pri")
     $$ = ""
   }
 | PRIMARY KEY 
   {
+    fmt.Println("pri111")
     $$ = AST_PRIMARY_KEY
   }
 
 column_definition:
-  column_definition_name column_definition_type primary_key_opt
+  ID data_type primary_key_opt
   {
+    fmt.Printf("CDN: %v, CDT: %v, PKO: %v\n", $1, $2, $3)
     $$ = ColumnDefinition{ColName: $1, ColType: $2, IsPrimaryKey: $3  }
   }
   
@@ -252,14 +315,16 @@ column_definition_list:
   }
 
 create_table_statement:
-  CREATE TABLE not_exists_opt ID '(' column_definition_list  ')' force_eof
+  CREATE TABLE not_exists_opt ID '(' column_definition_list  ')' 
   {
+    fmt.Printf("ID: %v, CDL: %v\n", $4, $6)
     $$ = &CreateTable{Name: $4, ColumnDefinitions: $6}  
   }
 
 create_statement:
   create_table_statement
   {
+    fmt.Printf("ahhhh\n")
     $$ = $1
   }
 | CREATE constraint_opt INDEX sql_id using_opt ON ID force_eof

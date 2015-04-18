@@ -23,6 +23,21 @@ func TestParse(t *testing.T) {
 	}
 }
 
+func TestCreatTable(t *testing.T) {
+	sql := `create table t1 (
+		name varchar(255) primary key,
+	)`
+	tree, err := Parse(sql)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s := String(tree)
+
+	if s != sql {
+		t.Fatal()
+	}
+}
+
 func BenchmarkParse1(b *testing.B) {
 	sql := "select 'abcd', 20, 30.0, eid from a where 1=eid and name='3'"
 	for i := 0; i < b.N; i++ {

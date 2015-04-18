@@ -206,7 +206,21 @@ type ColumnDefinition struct {
 	IsPrimaryKey string
 }
 
+func (node *ColumnDefinition) Format(buf *TrackedBuffer) {
+	buf.Myprintf("%s %s %s", node.ColName, node.ColType, node.IsPrimaryKey)
+}
+
 type ColumnDefinitions []ColumnDefinition
+
+func (node *ColumnDefinitions) Format(buf *TrackedBuffer) {
+	buf.Myprintf("(")
+	sep := ""
+	for i := 0; i < len(*node); i++ {
+		buf.Myprintf("%s%v\n", sep, (*node)[i])
+		sep = " "
+	}
+	buf.Myprintf(")")
+}
 
 type CreateTable struct {
 	Name              []byte
@@ -214,7 +228,7 @@ type CreateTable struct {
 }
 
 func (node *CreateTable) Format(buf *TrackedBuffer) {
-	//TODO need to implement this method
+	buf.Myprintf("create table %s %v", node.Name, node.ColumnDefinitions)
 }
 func (node *CreateTable) IStatement() {}
 
@@ -983,3 +997,9 @@ func (node OnDup) Format(buf *TrackedBuffer) {
 	}
 	buf.Myprintf(" on duplicate key update %v", UpdateExprs(node))
 }
+
+//ast keywords added for create table parsing
+
+const (
+	AST_UNSIGNED = "unsigned"
+)
