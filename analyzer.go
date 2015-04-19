@@ -2,13 +2,15 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+//Modified by Wenbin Xiao 2015.04.18
+
 package sqlparser
 
 // analyzer.go contains utility analysis functions.
 
 import (
+	"errors"
 	"fmt"
-
 	"github.com/xwb1989/sql_parser/dependency/sqltypes"
 )
 
@@ -20,6 +22,22 @@ func GetTableName(node SimpleTableExpr) string {
 	}
 	// sub-select or '.' expression
 	return ""
+}
+
+// Get the primary key of the table, sqlNode must be a CreateTable struct
+func GetPrimaryKey(sqlNode SQLNode) (string, error) {
+	node, ok := sqlNode.(*CreateTable)
+	if !ok {
+		return "", errors.New("fail to convert interface SQLNode to struct CreateTable")
+	}
+	for _, col := range node.ColumnDefinitions {
+		for _, att := range col.ColumnAtts {
+			if att == AST_PRIMARY_KEY {
+				return col.ColName, nil
+			}
+		}
+	}
+	return "", errors.New("unable to find primary key")
 }
 
 // GetColName returns the column name, only if
