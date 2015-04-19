@@ -6,7 +6,6 @@
 package sqlparser
 
 import "bytes"
-import "fmt"
 
 func SetParseTree(yylex interface{}, stmt Statement) {
   yylex.(*Tokenizer).ParseTree = stmt
@@ -160,8 +159,9 @@ Below are modification to extract primary key
 /*
 Datatypes
 */
-%token <bytes> BIT TINYINT SMALLINT MEDIUMINT INT INTEGER BIGINT REAL DOUBLE FLOAT UNSIGNED
-%type <str> length_opt char_type numeric_type unsigned_opt
+%token <empty> BIT TINYINT SMALLINT MEDIUMINT INT INTEGER BIGINT REAL DOUBLE FLOAT UNSIGNED ZEROFILL DECIMAL NUMERIC
+%token <empty> TEXT CHAR VARCHAR
+%type <str> length_opt char_type numeric_type unsigned_opt zero_fill_opt
 
 
 %%
@@ -232,41 +232,83 @@ set_statement:
     $$ = &Set{Comments: Comments($2), Exprs: $3}
   }
 
-data_type:
-  numeric_type 
+zero_fill_opt:
   {
-  //TODO
+    $$ = ""
+  }
+| ZEROFILL
+  {
+    $$ = AST_ZEROFILL
+  }
+data_type:
+  numeric_type length_opt unsigned_opt zero_fill_opt
+  {
+    $$ = $1
+    if $2 != "" {
+        $$ += $2
+    }
+    if $3 != "" {
+        $$ += " " + $3
+    }
+    if $4 != "" {
+        $$ += " " + $4
+    }
   }
 | char_type
   {
-  //TODO
+    $$ = $1
   }
 
 char_type:
+  CHAR length_opt
   {
-  //TODO
+    if $2 == "" {
+        $$ = AST_CHAR
+    } else {
+        $$ = AST_CHAR + $2
+    }
   }
+| VARCHAR length_opt
+  {
+    if $2 == "" {
+        $$ = AST_VARCHAR
+    } else {
+        $$ = AST_VARCHAR + $2
+    }
+  }
+| TEXT
+  {
+    $$ = AST_TEXT
+  }
+
 numeric_type:
-  BIT length_opt unsigned_opt
+  BIT 
   {
+    $$ = AST_BIT
   }
-| TINYINT length_opt unsigned_opt
+| TINYINT
   {
+    $$ = AST_TINYINT
   }
-| SMALLINT length_opt unsigned_opt
+| SMALLINT
   {
+    $$ = AST_SMALLINT
   }
-| MEDIUMINT length_opt unsigned_opt
+| MEDIUMINT
   {
+    $$ = AST_MEDIUMINT
   }
-| INT length_opt unsigned_opt
+| INT
   {
+    $$ = AST_INT
   }
-| INTEGER length_opt unsigned_opt
+| INTEGER
   {
+    $$ = AST_INTEGER
   }
-| BIGINT length_opt unsigned_opt
+| BIGINT
   {
+    $$ = AST_BIGINT
   }
 
 length_opt:
@@ -275,7 +317,7 @@ length_opt:
   }
 | '(' NUMBER ')'  
   {
-    $$ = fmt.Sprintf("(%v)", $2)
+    $$ = "(" + string($2) + ")"
   }
 
 unsigned_opt:
@@ -288,20 +330,17 @@ unsigned_opt:
   }
 primary_key_opt: 
   {
-    fmt.Println("pri")
     $$ = ""
   }
 | PRIMARY KEY 
   {
-    fmt.Println("pri111")
     $$ = AST_PRIMARY_KEY
   }
 
 column_definition:
   ID data_type primary_key_opt
   {
-    fmt.Printf("CDN: %v, CDT: %v, PKO: %v\n", $1, $2, $3)
-    $$ = ColumnDefinition{ColName: $1, ColType: $2, IsPrimaryKey: $3  }
+    $$ = ColumnDefinition{ColName: string($1), ColType: $2, IsPrimaryKey: $3  }
   }
   
 column_definition_list:
@@ -311,20 +350,18 @@ column_definition_list:
   }
 | column_definition_list ',' column_definition
   {
-    $$ = append($1, $3)
+    $$ = append($$, $3)
   }
 
 create_table_statement:
   CREATE TABLE not_exists_opt ID '(' column_definition_list  ')' 
   {
-    fmt.Printf("ID: %v, CDL: %v\n", $4, $6)
     $$ = &CreateTable{Name: $4, ColumnDefinitions: $6}  
   }
 
 create_statement:
   create_table_statement
   {
-    fmt.Printf("ahhhh\n")
     $$ = $1
   }
 | CREATE constraint_opt INDEX sql_id using_opt ON ID force_eof

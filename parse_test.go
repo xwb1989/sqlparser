@@ -5,6 +5,7 @@
 package sqlparser
 
 import (
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
@@ -25,17 +26,35 @@ func TestParse(t *testing.T) {
 
 func TestCreatTable(t *testing.T) {
 	sql := `create table t1 (
-		name varchar(255) primary key,
-	)`
+	ID int primary key,
+	LastName varchar(255),
+	FirstName varchar(255)
+)`
 	tree, err := Parse(sql)
 	if err != nil {
 		t.Fatal(err)
 	}
 	s := String(tree)
 
-	if s != sql {
-		t.Fatal()
+	assert.Equal(t, sql, s)
+}
+
+func TestPrimaryKey(t *testing.T) {
+	sql := `create table t1 (
+	LastName varchar(255),
+	FirstName varchar(255),
+	ID int primary key
+)`
+	tree, err := Parse(sql)
+	if err != nil {
+		t.Fatal(err)
 	}
+	create, ok := tree.(*CreateTable)
+	if !ok {
+		t.Fatal("not CreateTable")
+	}
+	primary_key := create.FindPrimaryKey()
+	assert.Equal(t, "ID", primary_key)
 }
 
 func BenchmarkParse1(b *testing.B) {

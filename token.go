@@ -104,6 +104,31 @@ var keywords = map[string]int{
 	"view":          VIEW,
 	"when":          WHEN,
 	"where":         WHERE,
+
+	//keywords for creat table
+
+	//datatypes
+	"bit":       BIT,
+	"tinyint":   TINYINT,
+	"smallint":  SMALLINT,
+	"mediumint": MEDIUMINT,
+	"int":       INT,
+	"integer":   INTEGER,
+	"bigint":    BIGINT,
+	"real":      REAL,
+	"double":    DOUBLE,
+	"float":     FLOAT,
+	"decimal":   DECIMAL,
+	"numeric":   NUMERIC,
+
+	"char":    CHAR,
+	"varchar": VARCHAR,
+	"text":    TEXT,
+
+	//other keywords
+	"unsigned": UNSIGNED,
+	"zerofill": ZEROFILL,
+	"primary":  PRIMARY,
 }
 
 // Lex returns the next token form the Tokenizer.

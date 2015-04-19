@@ -201,23 +201,31 @@ type DDL struct {
 }
 
 type ColumnDefinition struct {
-	ColName      []byte
-	ColType      []byte
+	ColName      string
+	ColType      string
 	IsPrimaryKey string
 }
 
-func (node *ColumnDefinition) Format(buf *TrackedBuffer) {
-	buf.Myprintf("%s %s %s", node.ColName, node.ColType, node.IsPrimaryKey)
+func (node ColumnDefinition) Format(buf *TrackedBuffer) {
+	s := ""
+	s += node.ColName
+	s += " " + node.ColType
+	if node.IsPrimaryKey != "" {
+		s += " " + node.IsPrimaryKey
+	}
+	buf.Myprintf(s)
 }
 
 type ColumnDefinitions []ColumnDefinition
 
-func (node *ColumnDefinitions) Format(buf *TrackedBuffer) {
-	buf.Myprintf("(")
-	sep := ""
-	for i := 0; i < len(*node); i++ {
-		buf.Myprintf("%s%v\n", sep, (*node)[i])
-		sep = " "
+func (node ColumnDefinitions) Format(buf *TrackedBuffer) {
+	sep := ",\n"
+	buf.Myprintf("(\n")
+	for i := 0; i < len(node); i++ {
+		if i == len(node)-1 {
+			sep = "\n"
+		}
+		buf.Myprintf("\t%v%s", node[i], sep)
 	}
 	buf.Myprintf(")")
 }
@@ -225,6 +233,15 @@ func (node *ColumnDefinitions) Format(buf *TrackedBuffer) {
 type CreateTable struct {
 	Name              []byte
 	ColumnDefinitions ColumnDefinitions
+}
+
+func (node *CreateTable) FindPrimaryKey() string {
+	for _, col := range node.ColumnDefinitions {
+		if col.IsPrimaryKey != "" {
+			return col.ColName
+		}
+	}
+	return ""
 }
 
 func (node *CreateTable) Format(buf *TrackedBuffer) {
@@ -1001,5 +1018,26 @@ func (node OnDup) Format(buf *TrackedBuffer) {
 //ast keywords added for create table parsing
 
 const (
+	//other keywords
 	AST_UNSIGNED = "unsigned"
+	AST_ZEROFILL = "zerofill"
+
+	//datatypes
+	AST_BIT       = "bit"
+	AST_TINYINT   = "tinyint"
+	AST_SMALLINT  = "smallint"
+	AST_MEDIUMINT = "mediumint"
+	AST_INT       = "int"
+	AST_INTEGER   = "integer"
+	AST_BIGINT    = "bigint"
+	AST_REAL      = "real"
+
+	AST_DOUBLE  = "double"
+	AST_FLOAT   = "float"
+	AST_DECIMAL = "decimal"
+	AST_NUMERIC = "numeric"
+
+	AST_CHAR    = "char"
+	AST_VARCHAR = "varchar"
+	AST_TEXT    = "text"
 )
