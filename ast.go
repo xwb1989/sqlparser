@@ -200,48 +200,42 @@ type DDL struct {
 	NewName []byte
 }
 
+type ColumnAtts []string
+
+func (node ColumnAtts) Format(buf *TrackedBuffer) {
+	prefix := " "
+	for _, v := range node {
+		if v != "" {
+			buf.Myprintf("%s%s", prefix, v)
+		}
+	}
+}
+
 type ColumnDefinition struct {
-	ColName      string
-	ColType      string
-	IsPrimaryKey string
+	ColName    string
+	ColType    string
+	ColumnAtts ColumnAtts
 }
 
 func (node ColumnDefinition) Format(buf *TrackedBuffer) {
-	s := ""
-	s += node.ColName
-	s += " " + node.ColType
-	if node.IsPrimaryKey != "" {
-		s += " " + node.IsPrimaryKey
-	}
-	buf.Myprintf(s)
+	buf.Myprintf("%s %s%v", node.ColName, node.ColType, node.ColumnAtts)
 }
 
 type ColumnDefinitions []ColumnDefinition
 
 func (node ColumnDefinitions) Format(buf *TrackedBuffer) {
-	sep := ",\n"
+	prefix := ""
 	buf.Myprintf("(\n")
 	for i := 0; i < len(node); i++ {
-		if i == len(node)-1 {
-			sep = "\n"
-		}
-		buf.Myprintf("\t%v%s", node[i], sep)
+		buf.Myprintf("%s\t%v", prefix, node[i])
+		prefix = ",\n"
 	}
-	buf.Myprintf(")")
+	buf.Myprintf("\n)")
 }
 
 type CreateTable struct {
 	Name              []byte
 	ColumnDefinitions ColumnDefinitions
-}
-
-func (node *CreateTable) FindPrimaryKey() string {
-	for _, col := range node.ColumnDefinitions {
-		if col.IsPrimaryKey != "" {
-			return col.ColName
-		}
-	}
-	return ""
 }
 
 func (node *CreateTable) Format(buf *TrackedBuffer) {
@@ -252,10 +246,6 @@ func (node *CreateTable) IStatement() {}
 const (
 	AST_TABLE = "table"
 	AST_VIEW  = "view"
-)
-
-const (
-	AST_PRIMARY_KEY = "primary key"
 )
 
 const (
@@ -1040,4 +1030,12 @@ const (
 	AST_CHAR    = "char"
 	AST_VARCHAR = "varchar"
 	AST_TEXT    = "text"
+
+	AST_PRIMARY_KEY = "primary key"
+
+	AST_UNIQUE_KEY     = "unique key"
+	AST_AUTO_INCREMENT = "auto_increment"
+	AST_NOT_NULL       = "not null"
+	AST_DEFAULT        = "default"
+	AST_KEY            = "key"
 )

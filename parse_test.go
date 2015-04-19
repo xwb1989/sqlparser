@@ -24,7 +24,7 @@ func TestParse(t *testing.T) {
 	}
 }
 
-func TestCreatTable(t *testing.T) {
+func TestCreatTable1(t *testing.T) {
 	sql := `create table t1 (
 	ID int primary key,
 	LastName varchar(255),
@@ -39,22 +39,34 @@ func TestCreatTable(t *testing.T) {
 	assert.Equal(t, sql, s)
 }
 
-func TestPrimaryKey(t *testing.T) {
+func TestCreatTable2(t *testing.T) {
 	sql := `create table t1 (
+	ID int primary key not null auto_increment,
 	LastName varchar(255),
-	FirstName varchar(255),
-	ID int primary key
+	FirstName varchar(255)
 )`
 	tree, err := Parse(sql)
 	if err != nil {
 		t.Fatal(err)
 	}
-	create, ok := tree.(*CreateTable)
-	if !ok {
-		t.Fatal("not CreateTable")
+	s := String(tree)
+
+	assert.Equal(t, sql, s)
+}
+
+func TestCreatTable3(t *testing.T) {
+	sql := `create table t1 (
+	ID int unique key not null auto_increment,
+	LastName varchar(255),
+	FirstName varchar(255)
+)`
+	tree, err := Parse(sql)
+	if err != nil {
+		t.Fatal(err)
 	}
-	primary_key := create.FindPrimaryKey()
-	assert.Equal(t, "ID", primary_key)
+	s := String(tree)
+
+	assert.Equal(t, sql, s)
 }
 
 func BenchmarkParse1(b *testing.B) {

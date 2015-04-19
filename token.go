@@ -126,9 +126,10 @@ var keywords = map[string]int{
 	"text":    TEXT,
 
 	//other keywords
-	"unsigned": UNSIGNED,
-	"zerofill": ZEROFILL,
-	"primary":  PRIMARY,
+	"unsigned":       UNSIGNED,
+	"zerofill":       ZEROFILL,
+	"primary":        PRIMARY,
+	"auto_increment": AUTO_INCREMENT,
 }
 
 // Lex returns the next token form the Tokenizer.

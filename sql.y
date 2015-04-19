@@ -63,18 +63,24 @@ var (
   updateExprs UpdateExprs
   updateExpr  *UpdateExpr
 
+/*
+for CreateTable
+*/
   createTableStmt CreateTable
   columnDefinition ColumnDefinition
   columnDefinitions []ColumnDefinition
+  columnAtts ColumnAtts
 }
 
 %token LEX_ERROR
-%token <empty> SELECT INSERT UPDATE DELETE FROM WHERE GROUP HAVING ORDER BY LIMIT FOR PRIMARY
+%token <empty> SELECT INSERT UPDATE DELETE FROM WHERE GROUP HAVING ORDER BY LIMIT FOR
 %token <empty> ALL DISTINCT AS EXISTS IN IS LIKE BETWEEN NULL ASC DESC VALUES INTO DUPLICATE KEY DEFAULT SET LOCK
 %token <bytes> ID STRING NUMBER VALUE_ARG LIST_ARG COMMENT
 %token <empty> LE GE NE NULL_SAFE_EQUAL
 %token <empty> '(' '=' '<' '>' '~'
 
+%token <empty> PRIMARY
+%token <empty> UNIQUE
 %left <empty> UNION MINUS EXCEPT INTERSECT
 %left <empty> ','
 %left <empty> JOIN STRAIGHT_JOIN LEFT RIGHT INNER OUTER CROSS NATURAL USE FORCE
@@ -85,14 +91,14 @@ var (
 %left <empty> '&' '|' '^'
 %left <empty> '+' '-'
 %left <empty> '*' '/' '%'
-%nonassoc <empty> '.'
-%left <empty> UNARY
+%nonassoc <empty> '.' 
+%left <empty> UNARY 
 %right <empty> CASE WHEN THEN ELSE
 %left <empty> END
 
 // DDL Tokens
 %token <empty> CREATE ALTER DROP RENAME ANALYZE
-%token <empty> TABLE INDEX VIEW TO IGNORE IF UNIQUE USING
+%token <empty> TABLE INDEX VIEW TO IGNORE IF USING
 %token <empty> SHOW DESCRIBE EXPLAIN
 
 %start any_command
@@ -151,17 +157,21 @@ var (
 /*
 Below are modification to extract primary key
 */
+/*
+keywords
+*/
+%token <empty> BIT TINYINT SMALLINT MEDIUMINT INT INTEGER BIGINT REAL DOUBLE FLOAT UNSIGNED ZEROFILL DECIMAL NUMERIC
+%token <empty> TEXT CHAR VARCHAR
+
+%token <empty> NULLX AUTO_INCREMENT BOOL APPROXNUM INTNUM
+
 %type <str> data_type
 %type <columnDefinition> column_definition
 %type <columnDefinitions> column_definition_list
 %type <statement> create_table_statement
-%type <str> primary_key_opt
-/*
-Datatypes
-*/
-%token <empty> BIT TINYINT SMALLINT MEDIUMINT INT INTEGER BIGINT REAL DOUBLE FLOAT UNSIGNED ZEROFILL DECIMAL NUMERIC
-%token <empty> TEXT CHAR VARCHAR
-%type <str> length_opt char_type numeric_type unsigned_opt zero_fill_opt
+%type <str> length_opt char_type numeric_type unsigned_opt zero_fill_opt key_att
+%type <columnAtts> column_atts
+
 
 
 %%
@@ -328,19 +338,58 @@ unsigned_opt:
   {
     $$ = AST_UNSIGNED
   }
-primary_key_opt: 
+
+column_atts:
   {
-    $$ = ""
+    $$ = ColumnAtts{}
   }
-| PRIMARY KEY 
+| column_atts NOT NULL
   {
-    $$ = AST_PRIMARY_KEY
+    $$ = append($$, AST_NOT_NULL)
   }
 
-column_definition:
-  ID data_type primary_key_opt
+| column_atts NULL
+| column_atts DEFAULT STRING
   {
-    $$ = ColumnDefinition{ColName: string($1), ColType: $2, IsPrimaryKey: $3  }
+    node := StrVal($3)
+    $$ = append($$, "default " + String(node))
+  }
+| column_atts DEFAULT NUMBER
+  {
+    node := NumVal($3)
+    $$ = append($$, "default " + String(node))
+  }
+| column_atts AUTO_INCREMENT
+  {
+    $$ = append($$, AST_AUTO_INCREMENT)
+  }
+| column_atts key_att
+{
+    $$ = append($$, $2)
+}
+
+key_att:
+  primary_key
+  { 
+    $$ = AST_PRIMARY_KEY
+  }
+| unique_key
+  {
+    $$ = AST_UNIQUE_KEY
+  }
+
+primary_key:
+  PRIMARY KEY
+| KEY 
+
+unique_key:
+  UNIQUE
+| UNIQUE KEY
+
+column_definition:
+  ID data_type column_atts
+  {
+    $$ = ColumnDefinition{ColName: string($1), ColType: $2, ColumnAtts: $3  }
   }
   
 column_definition_list:
