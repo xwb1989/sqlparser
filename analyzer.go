@@ -25,19 +25,19 @@ func GetTableName(node SimpleTableExpr) string {
 }
 
 // Get the primary key of the table, sqlNode must be a CreateTable struct
-func GetPrimaryKey(sqlNode SQLNode) (string, error) {
+func GetPrimaryKey(sqlNode SQLNode) (*ColumnDefinition, error) {
 	node, ok := sqlNode.(*CreateTable)
 	if !ok {
-		return "", errors.New("fail to convert interface SQLNode to struct CreateTable")
+		return nil, errors.New("fail to convert interface SQLNode to struct CreateTable")
 	}
 	for _, col := range node.ColumnDefinitions {
 		for _, att := range col.ColumnAtts {
 			if att == AST_PRIMARY_KEY {
-				return col.ColName, nil
+				return col, nil
 			}
 		}
 	}
-	return "", errors.New("unable to find primary key")
+	return nil, errors.New("unable to find primary key")
 }
 
 // GetColName returns the column name, only if
