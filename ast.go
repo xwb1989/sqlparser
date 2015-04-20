@@ -221,7 +221,7 @@ func (node ColumnDefinition) Format(buf *TrackedBuffer) {
 	buf.Myprintf("%s %s%v", node.ColName, node.ColType, node.ColumnAtts)
 }
 
-type ColumnDefinitions []ColumnDefinition
+type ColumnDefinitions []*ColumnDefinition
 
 func (node ColumnDefinitions) Format(buf *TrackedBuffer) {
 	prefix := ""

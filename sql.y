@@ -67,8 +67,8 @@ var (
 for CreateTable
 */
   createTableStmt CreateTable
-  columnDefinition ColumnDefinition
-  columnDefinitions []ColumnDefinition
+  columnDefinition *ColumnDefinition
+  columnDefinitions ColumnDefinitions
   columnAtts ColumnAtts
 }
 
@@ -389,7 +389,7 @@ unique_key:
 column_definition:
   ID data_type column_atts
   {
-    $$ = ColumnDefinition{ColName: string($1), ColType: $2, ColumnAtts: $3  }
+    $$ = &ColumnDefinition{ColName: string($1), ColType: $2, ColumnAtts: $3  }
   }
   
 column_definition_list:
