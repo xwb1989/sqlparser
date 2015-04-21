@@ -122,6 +122,22 @@ func TestCreatTable4(t *testing.T) {
 	}
 }
 
+func TestCreatTable5(t *testing.T) {
+	for_time := []string{"date", "time", "timestamp", "datetime", "year"}
+	for _, time := range for_time {
+		sql := fmt.Sprintf(`create table t1 (
+	ID int unique key not null auto_increment,
+	LastName varchar(255),
+	FirstName varchar(255),
+	LastUpdated %s
+)`, time)
+		tree, err := Parse(sql)
+		assert.Nil(t, err, "fail to parse:\n%s", sql)
+		s := String(tree)
+		assert.Equal(t, sql, s)
+	}
+}
+
 func BenchmarkParse1(b *testing.B) {
 	sql := "select 'abcd', 20, 30.0, eid from a where 1=eid and name='3'"
 	for i := 0; i < b.N; i++ {

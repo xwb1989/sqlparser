@@ -1031,6 +1031,12 @@ const (
 	AST_VARCHAR = "varchar"
 	AST_TEXT    = "text"
 
+	AST_DATE      = "date"
+	AST_TIME      = "time"
+	AST_TIMESTAMP = "timestamp"
+	AST_DATETIME  = "datetime"
+	AST_YEAR      = "year"
+
 	AST_PRIMARY_KEY = "primary key"
 
 	AST_UNIQUE_KEY     = "unique key"

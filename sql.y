@@ -160,7 +160,7 @@ Below are modification to extract primary key
 /*
 keywords
 */
-%token <empty> BIT TINYINT SMALLINT MEDIUMINT INT INTEGER BIGINT REAL DOUBLE FLOAT UNSIGNED ZEROFILL DECIMAL NUMERIC
+%token <empty> BIT TINYINT SMALLINT MEDIUMINT INT INTEGER BIGINT REAL DOUBLE FLOAT UNSIGNED ZEROFILL DECIMAL NUMERIC DATE TIME TIMESTAMP DATETIME YEAR
 %token <empty> TEXT CHAR VARCHAR
 
 %token <empty> NULLX AUTO_INCREMENT BOOL APPROXNUM INTNUM
@@ -169,7 +169,7 @@ keywords
 %type <columnDefinition> column_definition
 %type <columnDefinitions> column_definition_list
 %type <statement> create_table_statement
-%type <str> length_opt char_type numeric_type unsigned_opt zero_fill_opt key_att int_type decimal_type precision_opt
+%type <str> length_opt char_type numeric_type unsigned_opt zero_fill_opt key_att int_type decimal_type precision_opt time_type
 %type <columnAtts> column_atts
 
 
@@ -262,8 +262,28 @@ data_type:
     }
   }
 | char_type
+| time_type
+
+time_type:
+  DATE
   {
-    $$ = $1
+    $$ = AST_DATE
+  }
+| TIME
+  {
+    $$ = AST_TIME
+  }
+| TIMESTAMP
+  {
+    $$ = AST_TIMESTAMP
+  }
+| DATETIME
+  {
+    $$ = AST_DATETIME
+  }
+| YEAR
+  {
+    $$ = AST_YEAR
   }
 
 char_type:

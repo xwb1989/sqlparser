@@ -125,6 +125,12 @@ var keywords = map[string]int{
 	"varchar": VARCHAR,
 	"text":    TEXT,
 
+	"date":      DATE,
+	"time":      TIME,
+	"timestamp": TIMESTAMP,
+	"datetime":  DATETIME,
+	"year":      YEAR,
+
 	//other keywords
 	"unsigned":       UNSIGNED,
 	"zerofill":       ZEROFILL,
