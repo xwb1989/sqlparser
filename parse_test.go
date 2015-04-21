@@ -5,6 +5,7 @@
 package sqlparser
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -73,6 +74,52 @@ func TestCreatTable3(t *testing.T) {
 	s := String(tree)
 
 	assert.Equal(t, sql, s)
+}
+
+func TestCreatTable4(t *testing.T) {
+	for_precision := []string{"real", "double", "float", "decimal", "numeric"}
+	for _, p := range for_precision {
+		precision := "(32, 8)"
+		for i := 0; i < 2; i++ {
+			data_type := p
+			if i == 0 {
+				data_type += precision
+			}
+			sql := fmt.Sprintf(`create table t1 (
+	ID int unique key not null auto_increment,
+	LastName varchar(255),
+	FirstName varchar(255),
+	Balance %s%s
+)`, p, precision)
+			tree, err := Parse(sql)
+			assert.Nil(t, err)
+			s := String(tree)
+
+			assert.Equal(t, sql, s)
+		}
+	}
+
+	for_length := []string{"bit", "tinyint", "smallint", "mediumint", "int", "integer", "bigint", "decimal", "numeric"}
+	for _, p := range for_length {
+		length := "(32)"
+		for i := 0; i < 2; i++ {
+			data_type := p
+			if i == 0 {
+				data_type += length
+			}
+			sql := fmt.Sprintf(`create table t1 (
+	ID int unique key not null auto_increment,
+	LastName varchar(255),
+	FirstName varchar(255),
+	Balance %s%s
+)`, p, length)
+			tree, err := Parse(sql)
+			assert.Nil(t, err)
+			s := String(tree)
+
+			assert.Equal(t, sql, s)
+		}
+	}
 }
 
 func BenchmarkParse1(b *testing.B) {

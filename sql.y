@@ -169,7 +169,7 @@ keywords
 %type <columnDefinition> column_definition
 %type <columnDefinitions> column_definition_list
 %type <statement> create_table_statement
-%type <str> length_opt char_type numeric_type unsigned_opt zero_fill_opt key_att
+%type <str> length_opt char_type numeric_type unsigned_opt zero_fill_opt key_att int_type decimal_type precision_opt
 %type <columnAtts> column_atts
 
 
@@ -251,17 +251,14 @@ zero_fill_opt:
     $$ = AST_ZEROFILL
   }
 data_type:
-  numeric_type length_opt unsigned_opt zero_fill_opt
+  numeric_type unsigned_opt zero_fill_opt
   {
     $$ = $1
     if $2 != "" {
-        $$ += $2
+        $$ += " " + $2
     }
     if $3 != "" {
         $$ += " " + $3
-    }
-    if $4 != "" {
-        $$ += " " + $4
     }
   }
 | char_type
@@ -292,6 +289,16 @@ char_type:
   }
 
 numeric_type:
+  int_type length_opt 
+  {
+    $$ = $1 + $2
+  }
+| decimal_type
+  {
+    $$ = $1
+  }
+
+int_type:
   BIT 
   {
     $$ = AST_BIT
@@ -319,6 +326,45 @@ numeric_type:
 | BIGINT
   {
     $$ = AST_BIGINT
+  }
+
+decimal_type:
+  REAL precision_opt
+  {
+    $$ = AST_REAL + $2
+  }
+| DOUBLE precision_opt
+  {
+    $$ = AST_DOUBLE + $2
+  }
+| FLOAT precision_opt
+  {
+    $$ = AST_FLOAT + $2
+  }
+| DECIMAL precision_opt
+  {
+    $$ = AST_DECIMAL + $2
+  }
+| DECIMAL length_opt
+  {
+    $$ = AST_DECIMAL + $2
+  }
+| NUMERIC precision_opt
+  {
+    $$ = AST_NUMERIC + $2
+  }
+| NUMERIC length_opt
+  {
+    $$ = AST_NUMERIC + $2
+  }
+
+precision_opt:
+  {
+    $$ = ""
+  }
+| '(' NUMBER ',' NUMBER ')'
+  {
+    $$ = "(" + string($2) + ", " + string($4) + ")"
   }
 
 length_opt:

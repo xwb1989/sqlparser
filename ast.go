@@ -1020,8 +1020,8 @@ const (
 	AST_INT       = "int"
 	AST_INTEGER   = "integer"
 	AST_BIGINT    = "bigint"
-	AST_REAL      = "real"
 
+	AST_REAL    = "real"
 	AST_DOUBLE  = "double"
 	AST_FLOAT   = "float"
 	AST_DECIMAL = "decimal"
