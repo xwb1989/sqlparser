@@ -9,3 +9,7 @@ It applies the same LICENSE as youtube/vitess.
 
 * Rewrite SQL Queries by self-defined rewriter
 * Able to parse Create Table statements way much better
+
+##Usage
+
+Please check out tests for usage of the parser.
