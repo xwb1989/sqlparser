@@ -24,6 +24,12 @@ func TestParse(t *testing.T) {
 	}
 }
 
+func TestParseInsert(t *testing.T) {
+	sql := "INSERT INTO t3 VALUES (8, 10, 'baz')"
+	_, err := Parse(sql)
+	assert.Nil(t, err)
+}
+
 func TestCreatTable1(t *testing.T) {
 	sql := `create table t1 (
 	ID int primary key,
