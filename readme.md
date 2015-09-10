@@ -12,4 +12,13 @@ It applies the same LICENSE as youtube/vitess.
 
 ##Usage
 
-Please check out tests for usage of the parser.
+    import (
+        "github.com/xwb1989/sqlparser"
+    )
+
+Then use
+    
+    sqlparser.Parse(sql)
+
+See `parse_test.go` for more `Parse` usage.
+See `rewriter_test.go` for `Rewriter` usage.
