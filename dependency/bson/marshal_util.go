@@ -9,7 +9,7 @@ package bson
 import (
 	"time"
 
-	"github.com/xwb1989/sql_parser/dependency/bytes2"
+	"github.com/xwb1989/sqlparser/dependency/bytes2"
 )
 
 // EncodeInterface bson encodes an interface{}. Elements

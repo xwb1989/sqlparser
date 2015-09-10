@@ -11,7 +11,7 @@ import (
 	"io"
 	"unicode/utf8"
 
-	"github.com/xwb1989/sql_parser/dependency/hack"
+	"github.com/xwb1989/sqlparser/dependency/hack"
 )
 
 // ChunkedWriter has the same interface as bytes.Buffer's write functions.

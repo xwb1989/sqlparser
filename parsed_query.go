@@ -10,7 +10,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/xwb1989/sql_parser/dependency/sqltypes"
+	"github.com/xwb1989/sqlparser/dependency/sqltypes"
 )
 
 type bindLocation struct {
