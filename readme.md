@@ -21,4 +21,5 @@ Then use
     sqlparser.Parse(sql)
 
 See `parse_test.go` for more `Parse` usage.
+
 See `rewriter_test.go` for `Rewriter` usage.
