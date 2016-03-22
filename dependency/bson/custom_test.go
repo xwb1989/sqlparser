@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/youtube/vitess/go/bytes2"
+	"github.com/xwb1989/sqlparser/dependency/bytes2"
 )
 
 const (
