@@ -1,3 +1,5 @@
+![travis](https://travis-ci.org/xwb1989/sqlparser.svg?branch=master)
+
 ##Notice
 
 The backbone of this repo is extracted from [youtube/vitess](https://github.com/youtube/vitess).
