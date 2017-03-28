@@ -31,6 +31,22 @@ func TestParseInsert(t *testing.T) {
 	assert.Nil(t, err)
 }
 
+func TestParseInsert1(t *testing.T) {
+	sql := "INSERT INTO QBAdminGroup.abmc_contacts(id, name) VALUES (1, 'jimmy')"
+	tree, err := Parse(sql)
+	assert.Nil(t, err)
+	insert := tree.(*Insert)
+
+	for i, colName := range [2]string{"id", "name"} {
+		assert.Equal(t, colName, String(insert.Columns[i]))
+	}
+
+	for i, val := range [2]string{"1", "'jimmy'"} {
+		assert.Equal(t, val, String(insert.Rows.(Values)[0].(ValTuple)[i]))
+	}
+
+}
+
 func TestCreatTable1(t *testing.T) {
 	sql := `create table t1 (
 	ID int primary key,
