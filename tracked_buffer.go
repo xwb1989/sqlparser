@@ -1,6 +1,18 @@
-// Copyright 2012, Google Inc. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
+/*
+Copyright 2017 Google Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
 
 package sqlparser
 
@@ -8,6 +20,10 @@ import (
 	"bytes"
 	"fmt"
 )
+
+// NodeFormatter defines the signature of a custom node formatter
+// function that can be given to TrackedBuffer for code generation.
+type NodeFormatter func(buf *TrackedBuffer, node SQLNode)
 
 // TrackedBuffer is used to rebuild a query from the ast.
 // bindLocations keeps track of locations in the buffer that
@@ -19,15 +35,21 @@ import (
 type TrackedBuffer struct {
 	*bytes.Buffer
 	bindLocations []bindLocation
-	nodeFormatter func(buf *TrackedBuffer, node SQLNode)
+	nodeFormatter NodeFormatter
 }
 
-func NewTrackedBuffer(nodeFormatter func(buf *TrackedBuffer, node SQLNode)) *TrackedBuffer {
-	buf := &TrackedBuffer{
-		Buffer:        bytes.NewBuffer(make([]byte, 0, 128)),
-		bindLocations: make([]bindLocation, 0, 4),
+// NewTrackedBuffer creates a new TrackedBuffer.
+func NewTrackedBuffer(nodeFormatter NodeFormatter) *TrackedBuffer {
+	return &TrackedBuffer{
+		Buffer:        new(bytes.Buffer),
 		nodeFormatter: nodeFormatter,
 	}
+}
+
+// WriteNode function, initiates the writing of a single SQLNode tree by passing
+// through to Myprintf with a default format string
+func (buf *TrackedBuffer) WriteNode(node SQLNode) *TrackedBuffer {
+	buf.Myprintf("%v", node)
 	return buf
 }
 
@@ -60,7 +82,7 @@ func (buf *TrackedBuffer) Myprintf(format string, values ...interface{}) {
 			case rune:
 				buf.WriteRune(v)
 			default:
-				panic(fmt.Sprintf("unexpected type %T", v))
+				panic(fmt.Sprintf("unexpected TrackedBuffer type %T", v))
 			}
 		case 's':
 			switch v := values[fieldnum].(type) {
@@ -69,7 +91,7 @@ func (buf *TrackedBuffer) Myprintf(format string, values ...interface{}) {
 			case string:
 				buf.WriteString(v)
 			default:
-				panic(fmt.Sprintf("unexpected type %T", v))
+				panic(fmt.Sprintf("unexpected TrackedBuffer type %T", v))
 			}
 		case 'v':
 			node := values[fieldnum].(SQLNode)
@@ -88,8 +110,9 @@ func (buf *TrackedBuffer) Myprintf(format string, values ...interface{}) {
 	}
 }
 
-// WriteArg writes a value argument into the buffer. arg should not contain
-// the ':' prefix. It also adds tracking info for future substitutions.
+// WriteArg writes a value argument into the buffer along with
+// tracking information for future substitutions. arg must contain
+// the ":" or "::" prefix.
 func (buf *TrackedBuffer) WriteArg(arg string) {
 	buf.bindLocations = append(buf.bindLocations, bindLocation{
 		offset: buf.Len(),
@@ -98,10 +121,20 @@ func (buf *TrackedBuffer) WriteArg(arg string) {
 	buf.WriteString(arg)
 }
 
+// ParsedQuery returns a ParsedQuery that contains bind
+// locations for easy substitution.
 func (buf *TrackedBuffer) ParsedQuery() *ParsedQuery {
 	return &ParsedQuery{Query: buf.String(), bindLocations: buf.bindLocations}
 }
 
+// HasBindVars returns true if the parsed query uses bind vars.
 func (buf *TrackedBuffer) HasBindVars() bool {
 	return len(buf.bindLocations) != 0
+}
+
+// BuildParsedQuery builds a ParsedQuery from the input.
+func BuildParsedQuery(in string, vars ...interface{}) *ParsedQuery {
+	buf := NewTrackedBuffer(nil)
+	buf.Myprintf(in, vars...)
+	return buf.ParsedQuery()
 }
