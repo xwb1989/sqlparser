@@ -1,0 +1,244 @@
+Only in xwb1989/sqlparser/: .git
+Only in xwb1989/sqlparser/: .gitignore
+Only in xwb1989/sqlparser/: .travis.yml
+Only in xwb1989/sqlparser/: LICENSE.md
+diff -u youtube/vitess/go/vt/sqlparser/analyzer.go xwb1989/sqlparser/analyzer.go
+--- youtube/vitess/go/vt/sqlparser/analyzer.go	2017-09-16 21:27:21.000000000 -0700
++++ xwb1989/sqlparser/analyzer.go	2017-09-16 22:56:15.000000000 -0700
+@@ -19,14 +19,13 @@
+ // analyzer.go contains utility analysis functions.
+ 
+ import (
++	"errors"
+ 	"fmt"
+ 	"strconv"
+ 	"strings"
+ 	"unicode"
+ 
+-	"github.com/youtube/vitess/go/sqltypes"
+-	vtrpcpb "github.com/youtube/vitess/go/vt/proto/vtrpc"
+-	"github.com/youtube/vitess/go/vt/vterrors"
++	"github.com/xwb1989/sqlparser/dependency/sqltypes"
+ )
+ 
+ // These constants are used to identify the SQL statement type.
+@@ -169,7 +168,7 @@
+ 		case IntVal:
+ 			n, err := sqltypes.NewIntegral(string(node.Val))
+ 			if err != nil {
+-				return sqltypes.PlanValue{}, vterrors.Errorf(vtrpcpb.Code_INVALID_ARGUMENT, "%v", err)
++				return sqltypes.PlanValue{}, fmt.Errorf("%v", err)
+ 			}
+ 			return sqltypes.PlanValue{Value: n}, nil
+ 		case StrVal:
+@@ -177,7 +176,7 @@
+ 		case HexVal:
+ 			v, err := node.HexDecode()
+ 			if err != nil {
+-				return sqltypes.PlanValue{}, vterrors.Errorf(vtrpcpb.Code_INVALID_ARGUMENT, "%v", err)
++				return sqltypes.PlanValue{}, fmt.Errorf("%v", err)
+ 			}
+ 			return sqltypes.PlanValue{Value: sqltypes.MakeTrusted(sqltypes.VarBinary, v)}, nil
+ 		}
+@@ -193,7 +192,7 @@
+ 				return sqltypes.PlanValue{}, err
+ 			}
+ 			if innerpv.ListKey != "" || innerpv.Values != nil {
+-				return sqltypes.PlanValue{}, vterrors.New(vtrpcpb.Code_UNIMPLEMENTED, "unsupported: nested lists")
++				return sqltypes.PlanValue{}, errors.New("unsupported: nested lists")
+ 			}
+ 			pv.Values = append(pv.Values, innerpv)
+ 		}
+@@ -201,7 +200,7 @@
+ 	case *NullVal:
+ 		return sqltypes.PlanValue{}, nil
+ 	}
+-	return sqltypes.PlanValue{}, vterrors.Errorf(vtrpcpb.Code_INVALID_ARGUMENT, "expression is too complex '%v'", String(node))
++	return sqltypes.PlanValue{}, fmt.Errorf("expression is too complex '%v'", String(node))
+ }
+ 
+ // StringIn is a convenience function that returns
+diff -u youtube/vitess/go/vt/sqlparser/analyzer_test.go xwb1989/sqlparser/analyzer_test.go
+--- youtube/vitess/go/vt/sqlparser/analyzer_test.go	2017-09-16 21:27:21.000000000 -0700
++++ xwb1989/sqlparser/analyzer_test.go	2017-09-16 22:56:15.000000000 -0700
+@@ -21,7 +21,7 @@
+ 	"strings"
+ 	"testing"
+ 
+-	"github.com/youtube/vitess/go/sqltypes"
++	"github.com/xwb1989/sqlparser/dependency/sqltypes"
+ )
+ 
+ func TestPreview(t *testing.T) {
+diff -u youtube/vitess/go/vt/sqlparser/ast.go xwb1989/sqlparser/ast.go
+--- youtube/vitess/go/vt/sqlparser/ast.go	2017-09-16 21:27:21.000000000 -0700
++++ xwb1989/sqlparser/ast.go	2017-09-16 23:43:34.000000000 -0700
+@@ -21,14 +21,12 @@
+ 	"encoding/hex"
+ 	"encoding/json"
+ 	"errors"
++	"fmt"
++	"log"
+ 	"strings"
+ 
+-	log "github.com/golang/glog"
+-
+-	"github.com/youtube/vitess/go/sqltypes"
+-	querypb "github.com/youtube/vitess/go/vt/proto/query"
+-	vtrpcpb "github.com/youtube/vitess/go/vt/proto/vtrpc"
+-	"github.com/youtube/vitess/go/vt/vterrors"
++	"github.com/xwb1989/sqlparser/dependency/querypb"
++	"github.com/xwb1989/sqlparser/dependency/sqltypes"
+ )
+ 
+ // Instructions for creating new types: If a type
+@@ -51,11 +49,11 @@
+ 	tokenizer := NewStringTokenizer(sql)
+ 	if yyParse(tokenizer) != 0 {
+ 		if tokenizer.partialDDL != nil {
+-			log.Warningf("ignoring error parsing DDL '%s': %v", sql, tokenizer.LastError)
++			log.Printf("ignoring error parsing DDL '%s': %v", sql, tokenizer.LastError)
+ 			tokenizer.ParseTree = tokenizer.partialDDL
+ 			return tokenizer.ParseTree, nil
+ 		}
+-		return nil, vterrors.New(vtrpcpb.Code_INVALID_ARGUMENT, tokenizer.LastError)
++		return nil, errors.New(tokenizer.LastError)
+ 	}
+ 	return tokenizer.ParseTree, nil
+ }
+@@ -1786,7 +1784,7 @@
+ 		return NewStrVal(value.ToBytes()), nil
+ 	default:
+ 		// We cannot support sqltypes.Expression, or any other invalid type.
+-		return nil, vterrors.Errorf(vtrpcpb.Code_INTERNAL, "cannot convert value %v to AST", value)
++		return nil, fmt.Errorf("cannot convert value %v to AST", value)
+ 	}
+ }
+ 
+diff -u youtube/vitess/go/vt/sqlparser/ast_test.go xwb1989/sqlparser/ast_test.go
+--- youtube/vitess/go/vt/sqlparser/ast_test.go	2017-09-16 21:27:21.000000000 -0700
++++ xwb1989/sqlparser/ast_test.go	2017-09-16 22:56:15.000000000 -0700
+@@ -23,7 +23,7 @@
+ 	"testing"
+ 	"unsafe"
+ 
+-	"github.com/youtube/vitess/go/sqltypes"
++	"github.com/xwb1989/sqlparser/dependency/sqltypes"
+ )
+ 
+ func TestAppend(t *testing.T) {
+Only in xwb1989/sqlparser/: bytes2.patch
+Only in xwb1989/sqlparser/: dependency
+diff -u youtube/vitess/go/vt/sqlparser/encodable.go xwb1989/sqlparser/encodable.go
+--- youtube/vitess/go/vt/sqlparser/encodable.go	2017-09-16 21:27:21.000000000 -0700
++++ xwb1989/sqlparser/encodable.go	2017-09-16 22:56:15.000000000 -0700
+@@ -19,7 +19,7 @@
+ import (
+ 	"bytes"
+ 
+-	"github.com/youtube/vitess/go/sqltypes"
++	"github.com/xwb1989/sqlparser/dependency/sqltypes"
+ )
+ 
+ // This file contains types that are 'Encodable'.
+diff -u youtube/vitess/go/vt/sqlparser/encodable_test.go xwb1989/sqlparser/encodable_test.go
+--- youtube/vitess/go/vt/sqlparser/encodable_test.go	2017-09-16 21:27:21.000000000 -0700
++++ xwb1989/sqlparser/encodable_test.go	2017-09-16 22:56:15.000000000 -0700
+@@ -20,7 +20,7 @@
+ 	"bytes"
+ 	"testing"
+ 
+-	"github.com/youtube/vitess/go/sqltypes"
++	"github.com/xwb1989/sqlparser/dependency/sqltypes"
+ )
+ 
+ func TestEncodable(t *testing.T) {
+diff -u youtube/vitess/go/vt/sqlparser/normalizer.go xwb1989/sqlparser/normalizer.go
+--- youtube/vitess/go/vt/sqlparser/normalizer.go	2017-09-16 21:27:21.000000000 -0700
++++ xwb1989/sqlparser/normalizer.go	2017-09-16 23:12:28.000000000 -0700
+@@ -19,9 +19,9 @@
+ import (
+ 	"fmt"
+ 
+-	"github.com/youtube/vitess/go/sqltypes"
++	"github.com/xwb1989/sqlparser/dependency/sqltypes"
+ 
+-	querypb "github.com/youtube/vitess/go/vt/proto/query"
++	"github.com/xwb1989/sqlparser/dependency/querypb"
+ )
+ 
+ // Normalize changes the statement to use bind values, and
+diff -u youtube/vitess/go/vt/sqlparser/normalizer_test.go xwb1989/sqlparser/normalizer_test.go
+--- youtube/vitess/go/vt/sqlparser/normalizer_test.go	2017-09-16 21:27:21.000000000 -0700
++++ xwb1989/sqlparser/normalizer_test.go	2017-09-16 23:12:25.000000000 -0700
+@@ -20,8 +20,8 @@
+ 	"reflect"
+ 	"testing"
+ 
+-	"github.com/youtube/vitess/go/sqltypes"
+-	querypb "github.com/youtube/vitess/go/vt/proto/query"
++	"github.com/xwb1989/sqlparser/dependency/querypb"
++	"github.com/xwb1989/sqlparser/dependency/sqltypes"
+ )
+ 
+ func TestNormalize(t *testing.T) {
+diff -u youtube/vitess/go/vt/sqlparser/parsed_query.go xwb1989/sqlparser/parsed_query.go
+--- youtube/vitess/go/vt/sqlparser/parsed_query.go	2017-09-16 21:27:21.000000000 -0700
++++ xwb1989/sqlparser/parsed_query.go	2017-09-16 23:12:23.000000000 -0700
+@@ -21,9 +21,9 @@
+ 	"encoding/json"
+ 	"fmt"
+ 
+-	"github.com/youtube/vitess/go/sqltypes"
++	"github.com/xwb1989/sqlparser/dependency/sqltypes"
+ 
+-	querypb "github.com/youtube/vitess/go/vt/proto/query"
++	"github.com/xwb1989/sqlparser/dependency/querypb"
+ )
+ 
+ // ParsedQuery represents a parsed query where
+diff -u youtube/vitess/go/vt/sqlparser/parsed_query_test.go xwb1989/sqlparser/parsed_query_test.go
+--- youtube/vitess/go/vt/sqlparser/parsed_query_test.go	2017-09-16 21:27:21.000000000 -0700
++++ xwb1989/sqlparser/parsed_query_test.go	2017-09-16 23:12:21.000000000 -0700
+@@ -20,9 +20,9 @@
+ 	"reflect"
+ 	"testing"
+ 
+-	"github.com/youtube/vitess/go/sqltypes"
++	"github.com/xwb1989/sqlparser/dependency/sqltypes"
+ 
+-	querypb "github.com/youtube/vitess/go/vt/proto/query"
++	"github.com/xwb1989/sqlparser/dependency/querypb"
+ )
+ 
+ func TestNewParsedQuery(t *testing.T) {
+Only in xwb1989/sqlparser/: querypb.patch
+Only in xwb1989/sqlparser/: readme.md
+Only in xwb1989/sqlparser/: sqlparser.patch
+Only in xwb1989/sqlparser/: sqltypes.patch
+diff -u youtube/vitess/go/vt/sqlparser/token.go xwb1989/sqlparser/token.go
+--- youtube/vitess/go/vt/sqlparser/token.go	2017-09-16 21:27:21.000000000 -0700
++++ xwb1989/sqlparser/token.go	2017-09-16 22:56:15.000000000 -0700
+@@ -19,10 +19,11 @@
+ import (
+ 	"bytes"
+ 	"fmt"
++	"io"
+ 	"strings"
+ 
+-	"github.com/youtube/vitess/go/bytes2"
+-	"github.com/youtube/vitess/go/sqltypes"
++	"github.com/xwb1989/sqlparser/dependency/bytes2"
++	"github.com/xwb1989/sqlparser/dependency/sqltypes"
+ )
+ 
+ const eofChar = 0x100
+@@ -30,7 +31,7 @@
+ // Tokenizer is the struct used to generate SQL
+ // tokens for the parser.
+ type Tokenizer struct {
+-	InStream      *strings.Reader
++	InStream      io.ByteReader
+ 	AllowComments bool
+ 	ForceEOF      bool
+ 	lastChar      uint16
