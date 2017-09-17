@@ -66,9 +66,9 @@ go test ./...
 
 # Finally make some diffs (for later reference)
 cd $GOPATH/src/github.com
-diff -u youtube/vitess/go/sqltypes/        xwb1989/sqlparser/dependency/sqltypes/ > xwb1989/sqlparser/sqltypes.patch
-diff -u youtube/vitess/go/bytes2/          xwb1989/sqlparser/dependency/bytes2/   > xwb1989/sqlparser/bytes2.patch
-diff -u youtube/vitess/go/vt/proto/query/  xwb1989/sqlparser/dependency/querypb/  > xwb1989/sqlparser/querypb.patch
-diff -u youtube/vitess/go/vt/sqlparser/    xwb1989/sqlparser/                     > xwb1989/sqlparser/sqlparser.patch
+diff -u youtube/vitess/go/sqltypes/        xwb1989/sqlparser/dependency/sqltypes/ > xwb1989/sqlparser/patches/sqltypes.patch
+diff -u youtube/vitess/go/bytes2/          xwb1989/sqlparser/dependency/bytes2/   > xwb1989/sqlparser/patches/bytes2.patch
+diff -u youtube/vitess/go/vt/proto/query/  xwb1989/sqlparser/dependency/querypb/  > xwb1989/sqlparser/patches/querypb.patch
+diff -u youtube/vitess/go/vt/sqlparser/    xwb1989/sqlparser/                     > xwb1989/sqlparser/patches/sqlparser.patch
 
 ```
