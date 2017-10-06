@@ -367,6 +367,7 @@ func (node *Union) WalkSubtree(visit Visit) error {
 // the row and re-inserts with new values. For that reason we keep it as an Insert struct.
 // Replaces are currently disallowed in sharded schemas because
 // of the implications the deletion part may have on vindexes.
+// If you add fields here, consider adding them to calls to validateSubquerySamePlan.
 type Insert struct {
 	Action   string
 	Comments Comments
@@ -418,6 +419,7 @@ func (Values) iInsertRows()       {}
 func (*ParenSelect) iInsertRows() {}
 
 // Update represents an UPDATE statement.
+// If you add fields here, consider adding them to calls to validateSubquerySamePlan.
 type Update struct {
 	Comments   Comments
 	TableExprs TableExprs
@@ -451,6 +453,7 @@ func (node *Update) WalkSubtree(visit Visit) error {
 }
 
 // Delete represents a DELETE statement.
+// If you add fields here, consider adding them to calls to validateSubquerySamePlan.
 type Delete struct {
 	Comments   Comments
 	Targets    TableNames
