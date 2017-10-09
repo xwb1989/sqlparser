@@ -20,8 +20,8 @@ import (
 	"bytes"
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"fmt"
+	"io"
 	"log"
 	"strings"
 
@@ -41,7 +41,7 @@ import (
 // a set of types, define the function as iTypeName.
 // This will help avoid name collisions.
 
-// Parse parses the sql and returns a Statement, which
+// Parse parses the SQL in full and returns a Statement, which
 // is the AST representation of the query. If a DDL statement
 // is partially parsed but still contains a syntax error, the
 // error is ignored and the DDL is returned anyway.
@@ -53,7 +53,7 @@ func Parse(sql string) (Statement, error) {
 			tokenizer.ParseTree = tokenizer.partialDDL
 			return tokenizer.ParseTree, nil
 		}
-		return nil, errors.New(tokenizer.LastError)
+		return nil, tokenizer.LastError
 	}
 	return tokenizer.ParseTree, nil
 }
@@ -64,7 +64,7 @@ func ParseFromTokenizer(tokenizer *Tokenizer) (Statement, error) {
 			tokenizer.ParseTree = tokenizer.partialDDL
 			return tokenizer.ParseTree, nil
 		}
-		return nil, errors.New(tokenizer.LastError)
+		return nil, tokenizer.LastError
 	}
 	return tokenizer.ParseTree, nil
 }
@@ -74,16 +74,33 @@ func ParseFromTokenizer(tokenizer *Tokenizer) (Statement, error) {
 func ParseStrictDDL(sql string) (Statement, error) {
 	tokenizer := NewStringTokenizer(sql)
 	if yyParse(tokenizer) != 0 {
-		return nil, errors.New(tokenizer.LastError)
+		return nil, tokenizer.LastError
 	}
 	return tokenizer.ParseTree, nil
 }
 
+// ParseNext parses a single SQL statement from the tokenizer
+// returning a Statement which is the AST representation of the query.
+// The tokenizer will always read up to the end of the statement, allowing for
+// the next call to ParseNext to parse any subsequent SQL statements. When
+// there are no more statements to parse, a error of io.EOF is returned.
 func ParseNext(tokenizer *Tokenizer) (Statement, error) {
-	tokenizer.multi = true
+	if tokenizer.lastChar == ';' {
+		tokenizer.next()
+		tokenizer.skipBlank()
+	}
+	if tokenizer.lastChar == eofChar {
+		return nil, io.EOF
+	}
+
 	tokenizer.reset()
+	tokenizer.multi = true
 	if yyParse(tokenizer) != 0 {
-		return nil, errors.New(tokenizer.LastError)
+		if tokenizer.partialDDL != nil {
+			tokenizer.ParseTree = tokenizer.partialDDL
+			return tokenizer.ParseTree, nil
+		}
+		return nil, tokenizer.LastError
 	}
 	return tokenizer.ParseTree, nil
 }
@@ -127,6 +144,10 @@ func Walk(visit Visit, nodes ...SQLNode) error {
 
 // String returns a string representation of an SQLNode.
 func String(node SQLNode) string {
+	if node == nil {
+		return "<nil>"
+	}
+
 	buf := NewTrackedBuffer(nil)
 	buf.Myprintf("%v", node)
 	return buf.String()
