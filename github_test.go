@@ -23,20 +23,33 @@ import (
 
 func TestParsing(t *testing.T) {
 	tests := []struct {
-		github int
-		sql    string
+		id   int // Github issue ID
+		sql  string
+		skip string
 	}{
-		//{9, "select 1 as 测试 from dual"}, // Broken due to ReadByte()
-		{12, "SELECT * FROM AccessToken LIMIT 10 OFFSET 13"},
-		{14, "SELECT DATE_SUB(NOW(), INTERVAL 1 MONTH)"},
-		{15, "select STRAIGHT_JOIN t1.* FROM t1 INNER JOIN  t2 ON t1.CommonID = t2.CommonID WHERE t1.FilterID = 1"},
-		{16, "SELECT a FROM t WHERE FUNC(a) = 1"}, // Doesn't seem broken, need better example
+		{id: 9, sql: "select 1 as 测试 from dual", skip: "Broken due to ReadByte()"},
+		{id: 12, sql: "SELECT * FROM AccessToken LIMIT 10 OFFSET 13"},
+		{id: 14, sql: "SELECT DATE_SUB(NOW(), INTERVAL 1 MONTH)"},
+		{id: 15, sql: "select STRAIGHT_JOIN t1.* FROM t1 INNER JOIN  t2 ON t1.CommonID = t2.CommonID WHERE t1.FilterID = 1"},
+		{id: 16, sql: "SELECT a FROM t WHERE FUNC(a) = 1"}, // Doesn't seem broken, need better example
+
+		{id: 21, sql: `CREATE TABLE t (
+				UpdateDatetime TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP
+			)`, skip: "Parser doesn't handle CURRENT_TIMESTAMP yet."},
+		{id: 21, sql: `CREATE TABLE t (
+				UpdateDatetime TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间'
+			)`, skip: "Parser doesn't handle ON UPDATE yet."},
 	}
 
 	for _, test := range tests {
-		_, err := Parse(test.sql)
+		if test.skip != "" {
+			continue
+		}
+
+		tree, err := Parse(test.sql)
+		t.Logf("%s", String(tree))
 		if err != nil {
-			t.Errorf("https://github.com/xwb1989/sqlparser/issues/%d:\nParse(%q) err = %s, want nil", test.github, test.sql, err)
+			t.Errorf("https://github.com/xwb1989/sqlparser/issues/%d:\nParse(%q) err = %s, want nil", test.id, test.sql, err)
 		}
 	}
 }
