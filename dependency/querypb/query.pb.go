@@ -71,25 +71,6 @@ package querypb
 
 import "strconv"
 
-/*
-import proto "github.com/golang/protobuf/proto"
-import fmt "fmt"
-import math "math"
-import topodata "github.com/youtube/vitess/go/vt/proto/topodata"
-import vtrpc "github.com/youtube/vitess/go/vt/proto/vtrpc"
-
-// Reference imports to suppress errors if they are not otherwise used.
-var _ = proto.Marshal
-var _ = fmt.Errorf
-var _ = math.Inf
-
-// This is a compile-time assertion to ensure that this generated file
-// is compatible with the proto package it is being compiled against.
-// A compilation error at this line likely means your copy of the
-// proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
-*/
-
 // EnumName is a helper function to simplify printing protocol buffer enums
 // by name.  Given an enum map and a value, it returns a useful string.
 func EnumName(m map[int32]string, v int32) string {
