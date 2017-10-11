@@ -2,7 +2,7 @@ Only in youtube/vitess/go/sqltypes/: arithmetic.go
 Only in youtube/vitess/go/sqltypes/: arithmetic_test.go
 diff -u youtube/vitess/go/sqltypes/bind_variables.go xwb1989/sqlparser/dependency/sqltypes/bind_variables.go
 --- youtube/vitess/go/sqltypes/bind_variables.go	2017-09-16 21:27:21.000000000 -0700
-+++ xwb1989/sqlparser/dependency/sqltypes/bind_variables.go	2017-09-16 23:30:37.000000000 -0700
++++ xwb1989/sqlparser/dependency/sqltypes/bind_variables.go	2017-09-17 10:15:28.000000000 -0700
 @@ -19,11 +19,10 @@
  import (
  	"errors"
@@ -30,7 +30,7 @@ diff -u youtube/vitess/go/sqltypes/bind_variables.go xwb1989/sqlparser/dependenc
  // CopyBindVariables returns a shallow-copy of the given bindVariables map.
 diff -u youtube/vitess/go/sqltypes/bind_variables_test.go xwb1989/sqlparser/dependency/sqltypes/bind_variables_test.go
 --- youtube/vitess/go/sqltypes/bind_variables_test.go	2017-09-16 21:27:21.000000000 -0700
-+++ xwb1989/sqlparser/dependency/sqltypes/bind_variables_test.go	2017-09-16 23:12:15.000000000 -0700
++++ xwb1989/sqlparser/dependency/sqltypes/bind_variables_test.go	2017-09-17 10:15:28.000000000 -0700
 @@ -21,16 +21,14 @@
  	"strings"
  	"testing"
@@ -63,7 +63,7 @@ Only in youtube/vitess/go/sqltypes/: event_token.go
 Only in youtube/vitess/go/sqltypes/: event_token_test.go
 diff -u youtube/vitess/go/sqltypes/plan_value.go xwb1989/sqlparser/dependency/sqltypes/plan_value.go
 --- youtube/vitess/go/sqltypes/plan_value.go	2017-09-16 21:27:21.000000000 -0700
-+++ xwb1989/sqlparser/dependency/sqltypes/plan_value.go	2017-09-16 23:12:14.000000000 -0700
++++ xwb1989/sqlparser/dependency/sqltypes/plan_value.go	2017-09-17 10:15:28.000000000 -0700
 @@ -18,10 +18,10 @@
  
  import (
@@ -131,7 +131,7 @@ diff -u youtube/vitess/go/sqltypes/plan_value.go xwb1989/sqlparser/dependency/sq
  
 diff -u youtube/vitess/go/sqltypes/plan_value_test.go xwb1989/sqlparser/dependency/sqltypes/plan_value_test.go
 --- youtube/vitess/go/sqltypes/plan_value_test.go	2017-09-16 21:27:21.000000000 -0700
-+++ xwb1989/sqlparser/dependency/sqltypes/plan_value_test.go	2017-09-16 23:12:12.000000000 -0700
++++ xwb1989/sqlparser/dependency/sqltypes/plan_value_test.go	2017-09-17 10:15:28.000000000 -0700
 @@ -21,7 +21,7 @@
  	"strings"
  	"testing"
@@ -148,7 +148,7 @@ Only in youtube/vitess/go/sqltypes/: result.go
 Only in youtube/vitess/go/sqltypes/: result_test.go
 diff -u youtube/vitess/go/sqltypes/testing.go xwb1989/sqlparser/dependency/sqltypes/testing.go
 --- youtube/vitess/go/sqltypes/testing.go	2017-09-16 21:27:21.000000000 -0700
-+++ xwb1989/sqlparser/dependency/sqltypes/testing.go	2017-09-16 23:08:54.000000000 -0700
++++ xwb1989/sqlparser/dependency/sqltypes/testing.go	2017-09-17 10:15:28.000000000 -0700
 @@ -17,17 +17,14 @@
  package sqltypes
  
@@ -192,7 +192,7 @@ diff -u youtube/vitess/go/sqltypes/testing.go xwb1989/sqlparser/dependency/sqlty
 +*/
 diff -u youtube/vitess/go/sqltypes/type.go xwb1989/sqlparser/dependency/sqltypes/type.go
 --- youtube/vitess/go/sqltypes/type.go	2017-09-16 21:27:21.000000000 -0700
-+++ xwb1989/sqlparser/dependency/sqltypes/type.go	2017-09-16 23:12:10.000000000 -0700
++++ xwb1989/sqlparser/dependency/sqltypes/type.go	2017-09-17 10:15:28.000000000 -0700
 @@ -19,7 +19,7 @@
  import (
  	"fmt"
@@ -204,7 +204,7 @@ diff -u youtube/vitess/go/sqltypes/type.go xwb1989/sqlparser/dependency/sqltypes
  // This file provides wrappers and support
 diff -u youtube/vitess/go/sqltypes/type_test.go xwb1989/sqlparser/dependency/sqltypes/type_test.go
 --- youtube/vitess/go/sqltypes/type_test.go	2017-09-16 21:27:21.000000000 -0700
-+++ xwb1989/sqlparser/dependency/sqltypes/type_test.go	2017-09-16 23:12:09.000000000 -0700
++++ xwb1989/sqlparser/dependency/sqltypes/type_test.go	2017-09-17 10:15:28.000000000 -0700
 @@ -19,7 +19,7 @@
  import (
  	"testing"
@@ -216,7 +216,7 @@ diff -u youtube/vitess/go/sqltypes/type_test.go xwb1989/sqlparser/dependency/sql
  func TestTypeValues(t *testing.T) {
 diff -u youtube/vitess/go/sqltypes/value.go xwb1989/sqlparser/dependency/sqltypes/value.go
 --- youtube/vitess/go/sqltypes/value.go	2017-09-16 21:27:21.000000000 -0700
-+++ xwb1989/sqlparser/dependency/sqltypes/value.go	2017-09-16 23:12:05.000000000 -0700
++++ xwb1989/sqlparser/dependency/sqltypes/value.go	2017-09-17 10:15:28.000000000 -0700
 @@ -23,10 +23,10 @@
  	"fmt"
  	"strconv"
@@ -233,7 +233,7 @@ diff -u youtube/vitess/go/sqltypes/value.go xwb1989/sqlparser/dependency/sqltype
  var (
 diff -u youtube/vitess/go/sqltypes/value_test.go xwb1989/sqlparser/dependency/sqltypes/value_test.go
 --- youtube/vitess/go/sqltypes/value_test.go	2017-09-16 21:27:21.000000000 -0700
-+++ xwb1989/sqlparser/dependency/sqltypes/value_test.go	2017-09-16 23:12:03.000000000 -0700
++++ xwb1989/sqlparser/dependency/sqltypes/value_test.go	2017-09-17 10:15:28.000000000 -0700
 @@ -22,7 +22,7 @@
  	"strings"
  	"testing"

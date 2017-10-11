@@ -1,33 +1,50 @@
 [![Build Status](https://travis-ci.org/xwb1989/sqlparser.svg?branch=master)](https://travis-ci.org/xwb1989/sqlparser)
 
-## Notice
+# Notice
 
 The backbone of this repo is extracted from [youtube/vitess](https://github.com/youtube/vitess).
 
 Inside youtube/vitess there is a very nicely written sql parser. However as it's not a self-contained application, I created this one. 
 It applies the same LICENSE as youtube/vitess.
 
-## What's More In this REPO
+# Usage
 
-* Rewrite SQL Queries by self-defined rewriter
-* Able to parse Create Table statements way much better
-
-## Usage
-
+```go
     import (
         "github.com/xwb1989/sqlparser"
     )
+```
 
 Then use
-    
+
+```go    
     sqlparser.Parse(sql)
+```
 
 See `parse_test.go` for more `Parse` usage.
 
-See `rewriter_test.go` for `Rewriter` usage.
+# Porting Instructions
 
+You only need the below if you plan to try and keep this library up to date with [youtube/vitess](https://github.com/youtube/vitess).
 
-## Porting Instructions
+## Keeping up to date
+
+```bash
+cd $GOPATH/src/github.com/youtube/vitess/go
+
+# Create patches for everything that changed
+LASTIMPORT=96e55291d76a397d2ebf183794272d11747e67b2
+git format-patch $LASTIMPORT vt/sqlparser
+git format-patch $LASTIMPORT sqltypes
+git format-patch $LASTIMPORT bytes2
+git format-patch $LASTIMPORT hack
+
+# Apply them to the repo
+cd $GOPATH/src/github.com/xwb1989/sqlparser
+git am -p4 ../../youtube/vitess/go/*.patch
+```
+
+## Fresh install
 
 ```bash
 cd $GOPATH/src/github.com/xwb1989/sqlparser
@@ -60,6 +77,12 @@ sed -i '.bak' 's/proto.Equal/reflect.DeepEqual/g' dependency/sqltypes/*.go
 # Remove the error library
 sed -i '.bak' 's/vterrors.Errorf([^,]*, /fmt.Errorf(/g' *.go dependency/sqltypes/*.go
 sed -i '.bak' 's/vterrors.New([^,]*, /errors.New(/g' *.go dependency/sqltypes/*.go
+```
+
+## Testing
+
+```bash
+cd $GOPATH/src/github.com/xwb1989/sqlparser
 
 # Test, fix and repeat
 go test ./...
@@ -70,5 +93,4 @@ diff -u youtube/vitess/go/sqltypes/        xwb1989/sqlparser/dependency/sqltypes
 diff -u youtube/vitess/go/bytes2/          xwb1989/sqlparser/dependency/bytes2/   > xwb1989/sqlparser/patches/bytes2.patch
 diff -u youtube/vitess/go/vt/proto/query/  xwb1989/sqlparser/dependency/querypb/  > xwb1989/sqlparser/patches/querypb.patch
 diff -u youtube/vitess/go/vt/sqlparser/    xwb1989/sqlparser/                     > xwb1989/sqlparser/patches/sqlparser.patch
-
 ```
