@@ -737,7 +737,7 @@ type ColumnDefinition struct {
 
 // Format formats the node.
 func (col *ColumnDefinition) Format(buf *TrackedBuffer) {
-	buf.Myprintf("`%s` %v", col.Name.String(), &col.Type)
+	buf.Myprintf("%v %v", col.Name, &col.Type)
 }
 
 // WalkSubtree walks the nodes of the subtree.
@@ -959,9 +959,9 @@ func (idx *IndexDefinition) Format(buf *TrackedBuffer) {
 	buf.Myprintf("%v (", idx.Info)
 	for i, col := range idx.Columns {
 		if i != 0 {
-			buf.Myprintf(", `%s`", col.Column.String())
+			buf.Myprintf(", %v", col.Column)
 		} else {
-			buf.Myprintf("`%s`", col.Column.String())
+			buf.Myprintf("%v", col.Column)
 		}
 		if col.Length != nil {
 			buf.Myprintf("(%v)", col.Length)
@@ -998,17 +998,13 @@ func (ii *IndexInfo) Format(buf *TrackedBuffer) {
 	if ii.Primary {
 		buf.Myprintf("%s", ii.Type)
 	} else {
-		buf.Myprintf("%s `%v`", ii.Type, ii.Name)
+		buf.Myprintf("%s %v", ii.Type, ii.Name)
 	}
 }
 
 // WalkSubtree walks the nodes of the subtree.
 func (ii *IndexInfo) WalkSubtree(visit Visit) error {
-	if err := Walk(visit, ii.Name); err != nil {
-		return err
-	}
-
-	return nil
+	return Walk(visit, ii.Name)
 }
 
 // IndexColumn describes a column in an index definition with optional length
@@ -2424,10 +2420,7 @@ func (node *CaseExpr) WalkSubtree(visit Visit) error {
 			return err
 		}
 	}
-	if err := Walk(visit, node.Else); err != nil {
-		return err
-	}
-	return nil
+	return Walk(visit, node.Else)
 }
 
 // Default represents a DEFAULT expression.
