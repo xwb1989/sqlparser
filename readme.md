@@ -42,6 +42,14 @@ git format-patch $LASTIMPORT hack
 # Apply them to the repo
 cd $GOPATH/src/github.com/xwb1989/sqlparser
 git am -p4 ../../youtube/vitess/go/*.patch
+
+# If you encounter diff failures, manually fix them with
+patch -p4 < .git/rebase-apply/patch
+...
+git add name_of_files
+git am --continue
+
+# Finally update the LASTIMPORT in this README.
 ```
 
 ## Fresh install
