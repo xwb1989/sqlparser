@@ -33,7 +33,7 @@ You only need the below if you plan to try and keep this library up to date with
 cd $GOPATH/src/github.com/youtube/vitess/go
 
 # Create patches for everything that changed
-LASTIMPORT=96e55291d76a397d2ebf183794272d11747e67b2
+LASTIMPORT=5d7c5b2a2f6f1766843729a89b649e182441b529
 git format-patch $LASTIMPORT vt/sqlparser
 git format-patch $LASTIMPORT sqltypes
 git format-patch $LASTIMPORT bytes2
