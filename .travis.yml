@@ -1,10 +1,18 @@
 dist: trusty
-language: go
 sudo: false
 
+language: go
 go:
-  - 1.6
-  - 1.7
-  - 1.8
-  - 1.9
+  - 1.6.x
+  - 1.7.x
+  - 1.8.x
+  - 1.9.x
   - tip
+
+before_install:
+  - go get github.com/mattn/goveralls
+  - go get golang.org/x/tools/cmd/cover
+  - go install golang.org/x/tools/cmd/goyacc
+
+script:
+  - $HOME/gopath/bin/goveralls -service=travis-ci
