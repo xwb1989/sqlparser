@@ -58,17 +58,6 @@ func Parse(sql string) (Statement, error) {
 	return tokenizer.ParseTree, nil
 }
 
-func ParseFromTokenizer(tokenizer *Tokenizer) (Statement, error) {
-	if yyParse(tokenizer) != 0 {
-		if tokenizer.partialDDL != nil {
-			tokenizer.ParseTree = tokenizer.partialDDL
-			return tokenizer.ParseTree, nil
-		}
-		return nil, tokenizer.LastError
-	}
-	return tokenizer.ParseTree, nil
-}
-
 // ParseStrictDDL is the same as Parse except it errors on
 // partially parsed DDL statements.
 func ParseStrictDDL(sql string) (Statement, error) {
