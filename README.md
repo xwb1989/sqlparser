@@ -1,33 +1,62 @@
-[![Build Status](https://travis-ci.org/xwb1989/sqlparser.svg?branch=master)](https://travis-ci.org/xwb1989/sqlparser)
+# sqlparser [![Build Status](https://img.shields.io/travis/xwb1989/sqlparser.svg)](https://travis-ci.org/xwb1989/sqlparser) [![Coverage](https://img.shields.io/coveralls/xwb1989/sqlparser.svg)](https://coveralls.io/github/xwb1989/sqlparser) [![Report card](https://goreportcard.com/badge/github.com/xwb1989/sqlparser)](https://goreportcard.com/report/github.com/xwb1989/sqlparser) [![GoDoc](https://godoc.org/github.com/xwb1989/sqlparser?status.svg)](https://godoc.org/github.com/xwb1989/sqlparser)
 
-# Notice
+Go package for parsing MySQL SQL queries.
+
+## Notice
 
 The backbone of this repo is extracted from [youtube/vitess](https://github.com/youtube/vitess).
 
 Inside youtube/vitess there is a very nicely written sql parser. However as it's not a self-contained application, I created this one. 
 It applies the same LICENSE as youtube/vitess.
 
-# Usage
+## Usage
 
 ```go
-    import (
-        "github.com/xwb1989/sqlparser"
-    )
+import (
+    "github.com/xwb1989/sqlparser"
+)
 ```
 
-Then use
+Then use:
 
-```go    
-    sqlparser.Parse(sql)
+```go
+sql := "SELECT * FROM table WHERE a = 'abc'"
+stmt, err := sqlparser.Parse(sql)
+if err != nil {
+	// Do something with the err
+}
+
+// Otherwise do something with stmt
+switch stmt := stmt.(type) {
+case *sqlparser.Select:
+	_ = stmt
+case *sqlparser.Insert:
+}
 ```
 
-See `parse_test.go` for more `Parse` usage.
+Alternative to read many queries from a io.Reader:
 
-# Porting Instructions
+```go
+r := strings.NewReader("INSERT INTO table1 VALUES (1, 'a'); INSERT INTO table2 VALUES (3, 4);")
+
+tokens := sqlparser.NewTokenizer(r)
+for {
+	stmt, err := sqlparser.ParseNext(tokens)
+	if err == io.EOF {
+		break
+	}
+	// Do something with stmt or err.
+}
+```
+
+See [parse_test.go](https://github.com/xwb1989/sqlparser/blob/master/parse_test.go) for more examples, or read the [godoc](https://godoc.org/github.com/xwb1989/sqlparser).
+
+
+## Porting Instructions
 
 You only need the below if you plan to try and keep this library up to date with [youtube/vitess](https://github.com/youtube/vitess).
 
-## Keeping up to date
+### Keeping up to date
 
 ```bash
 cd $GOPATH/src/github.com/youtube/vitess/go
@@ -52,7 +81,7 @@ git am --continue
 # Finally update the LASTIMPORT in this README.
 ```
 
-## Fresh install
+### Fresh install
 
 ```bash
 cd $GOPATH/src/github.com/xwb1989/sqlparser
@@ -87,7 +116,7 @@ sed -i '.bak' 's/vterrors.Errorf([^,]*, /fmt.Errorf(/g' *.go dependency/sqltypes
 sed -i '.bak' 's/vterrors.New([^,]*, /errors.New(/g' *.go dependency/sqltypes/*.go
 ```
 
-## Testing
+### Testing
 
 ```bash
 cd $GOPATH/src/github.com/xwb1989/sqlparser

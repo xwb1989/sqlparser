@@ -18,6 +18,8 @@ package sqlparser
 // Additional tests to address the GitHub issues for this fork.
 
 import (
+	"io"
+	"strings"
 	"testing"
 )
 
@@ -44,5 +46,36 @@ func TestParsing(t *testing.T) {
 		if _, err := Parse(test.sql); err != nil {
 			t.Errorf("https://github.com/xwb1989/sqlparser/issues/%d:\nParse(%q) err = %s, want nil", test.id, test.sql, err)
 		}
+	}
+}
+
+// ExampleParse is the first example from the README.md.
+func ExampleParse() {
+	sql := "SELECT * FROM table WHERE a = 'abc'"
+	stmt, err := Parse(sql)
+	if err != nil {
+		// Do something with the err
+	}
+
+	// Otherwise do something with stmt
+	switch stmt := stmt.(type) {
+	case *Select:
+		_ = stmt
+	case *Insert:
+	}
+}
+
+// ExampleParseNext is the second example from the README.md.
+func ExampleParseNext() {
+	r := strings.NewReader("INSERT INTO table1 VALUES (1, 'a'); INSERT INTO table2 VALUES (3, 4);")
+
+	tokens := NewTokenizer(r)
+	for {
+		stmt, err := ParseNext(tokens)
+		if err == io.EOF {
+			break
+		}
+		// Do something with stmt or err.
+		_ = stmt
 	}
 }
