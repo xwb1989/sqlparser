@@ -18,12 +18,10 @@ package sqlparser
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 
-	"github.com/xwb1989/sqlparser/dependency/sqltypes"
-
 	"github.com/xwb1989/sqlparser/dependency/querypb"
+	"github.com/xwb1989/sqlparser/dependency/sqltypes"
 )
 
 // ParsedQuery represents a parsed query where
@@ -69,12 +67,6 @@ func (pq *ParsedQuery) GenerateQuery(bindVariables map[string]*querypb.BindVaria
 	}
 	buf.WriteString(pq.Query[current:])
 	return buf.Bytes(), nil
-}
-
-// MarshalJSON is a custom JSON marshaler for ParsedQuery.
-// Note that any queries longer that 512 bytes will be truncated.
-func (pq *ParsedQuery) MarshalJSON() ([]byte, error) {
-	return json.Marshal(TruncateForUI(pq.Query))
 }
 
 // EncodeValue encodes one bind variable value into the query.
