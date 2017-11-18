@@ -1433,16 +1433,15 @@ func (node *ParenTableExpr) WalkSubtree(visit Visit) error {
 	)
 }
 
+// JoinCondition represents the join conditions (either a ON or USING clause)
+// of a JoinTableExpr.
 type JoinCondition struct {
 	On    Expr
 	Using Columns
 }
 
-func (node *JoinCondition) Format(buf *TrackedBuffer) {
-	if node == nil {
-		return
-	}
-
+// Format formats the node.
+func (node JoinCondition) Format(buf *TrackedBuffer) {
 	if node.On != nil {
 		buf.Myprintf(" on %v", node.On)
 	}
@@ -1451,11 +1450,8 @@ func (node *JoinCondition) Format(buf *TrackedBuffer) {
 	}
 }
 
-func (node *JoinCondition) WalkSubtree(visit Visit) error {
-	if node == nil {
-		return nil
-	}
-
+// WalkSubtree walks the nodes of the subtree.
+func (node JoinCondition) WalkSubtree(visit Visit) error {
 	return Walk(
 		visit,
 		node.On,
@@ -1468,7 +1464,7 @@ type JoinTableExpr struct {
 	LeftExpr  TableExpr
 	Join      string
 	RightExpr TableExpr
-	Condition *JoinCondition
+	Condition JoinCondition
 }
 
 // JoinTableExpr.Join

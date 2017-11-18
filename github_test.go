@@ -36,6 +36,7 @@ func TestParsing(t *testing.T) {
 		{id: 16, sql: "SELECT a FROM t WHERE FUNC(a) = 1"}, // Doesn't seem broken, need better example
 		{id: 21, sql: `CREATE TABLE t (UpdateDatetime TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP)`},
 		{id: 21, sql: `CREATE TABLE t (UpdateDatetime TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间')`},
+		{id: 24, sql: `select * from t1 join t2 using(id)`},
 	}
 
 	for _, test := range tests {
