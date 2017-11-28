@@ -14,4 +14,4 @@ before_install:
   - go install golang.org/x/tools/cmd/goyacc
 
 script:
-  - $HOME/gopath/bin/goveralls -service=travis-ci
+  - travis_retry $HOME/gopath/bin/goveralls -service=travis-ci
