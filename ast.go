@@ -1123,7 +1123,7 @@ func (node *VindexSpec) Format(buf *TrackedBuffer) {
 	}
 
 	if node.Owner != "" {
-		buf.Myprintf("FROM %v", node.Owner)
+		buf.Myprintf(" using %s", node.Owner)
 	}
 }
 
