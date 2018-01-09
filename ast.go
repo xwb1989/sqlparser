@@ -1062,6 +1062,7 @@ func (node *Show) Format(buf *TrackedBuffer) {
 	}
 }
 
+// HasOnTable returns true if the show statement has an "on" clause
 func (node *Show) HasOnTable() bool {
 	return node.OnTable.Name.v != ""
 }
