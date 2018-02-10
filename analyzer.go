@@ -31,6 +31,7 @@ import (
 // These constants are used to identify the SQL statement type.
 const (
 	StmtSelect = iota
+	StmtStream
 	StmtInsert
 	StmtReplace
 	StmtUpdate
@@ -62,6 +63,8 @@ func Preview(sql string) int {
 	switch loweredFirstWord {
 	case "select":
 		return StmtSelect
+	case "stream":
+		return StmtStream
 	case "insert":
 		return StmtInsert
 	case "replace":
@@ -108,6 +111,8 @@ func StmtType(stmtType int) string {
 	switch stmtType {
 	case StmtSelect:
 		return "SELECT"
+	case StmtStream:
+		return "STREAM"
 	case StmtInsert:
 		return "INSERT"
 	case StmtReplace:
