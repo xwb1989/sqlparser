@@ -620,6 +620,9 @@ const (
 	CreateVindexStr  = "create vindex"
 	AddColVindexStr  = "add vindex"
 	DropColVindexStr = "drop vindex"
+
+	// Vindex DDL param to specify the owner of a vindex
+	VindexOwnerStr = "owner"
 )
 
 // Format formats the node.
@@ -1122,7 +1125,21 @@ type VindexSpec struct {
 	Name   ColIdent
 	Type   ColIdent
 	Params []VindexParam
-	Owner  string
+}
+
+// ParseParams parses the vindex parameter list, pulling out the special-case
+// "owner" parameter
+func (node *VindexSpec) ParseParams() (string, map[string]string) {
+	var owner string
+	params := map[string]string{}
+	for _, p := range node.Params {
+		if p.Key.Lowered() == VindexOwnerStr {
+			owner = p.Val
+		} else {
+			params[p.Key.String()] = p.Val
+		}
+	}
+	return owner, params
 }
 
 // Format formats the node. The "CREATE VINDEX" preamble was formatted in
@@ -1130,9 +1147,6 @@ type VindexSpec struct {
 // parameters, and optionally the owner
 func (node *VindexSpec) Format(buf *TrackedBuffer) {
 	buf.Myprintf("using %v", node.Type)
-	if node.Owner != "" {
-		buf.Myprintf(" on %s", node.Owner)
-	}
 
 	numParams := len(node.Params)
 	if numParams != 0 {
