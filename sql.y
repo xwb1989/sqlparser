@@ -150,7 +150,7 @@ func forceEOF(yylex interface{}) {
 
 // DDL Tokens
 %token <bytes> CREATE ALTER DROP RENAME ANALYZE ADD
-%token <bytes> TABLE INDEX VIEW TO IGNORE IF UNIQUE PRIMARY COLUMN CONSTRAINT SPATIAL FULLTEXT FOREIGN
+%token <bytes> SCHEMA TABLE INDEX VIEW TO IGNORE IF UNIQUE PRIMARY COLUMN CONSTRAINT SPATIAL FULLTEXT FOREIGN
 %token <bytes> SHOW DESCRIBE EXPLAIN DATE ESCAPE REPAIR OPTIMIZE TRUNCATE
 %token <bytes> MAXVALUE PARTITION REORGANIZE LESS THAN PROCEDURE TRIGGER
 %token <bytes> VINDEX VINDEXES
@@ -166,6 +166,7 @@ func forceEOF(yylex interface{}) {
 %token <bytes> CHAR VARCHAR BOOL CHARACTER VARBINARY NCHAR
 %token <bytes> TEXT TINYTEXT MEDIUMTEXT LONGTEXT
 %token <bytes> BLOB TINYBLOB MEDIUMBLOB LONGBLOB JSON ENUM
+%token <bytes> GEOMETRY POINT LINESTRING POLYGON GEOMETRYCOLLECTION MULTIPOINT MULTILINESTRING MULTIPOLYGON
 
 // Type Modifiers
 %token <bytes> NULLX AUTO_INCREMENT APPROXNUM SIGNED UNSIGNED ZEROFILL
@@ -260,7 +261,7 @@ func forceEOF(yylex interface{}) {
 %type <str> set_session_or_global show_session_or_global
 %type <convertType> convert_type
 %type <columnType> column_type
-%type <columnType> int_type decimal_type numeric_type time_type char_type
+%type <columnType> int_type decimal_type numeric_type time_type char_type spatial_type
 %type <optVal> length_opt column_default_opt column_comment_opt on_update_opt
 %type <str> charset_opt collate_opt
 %type <boolVal> unsigned_opt zero_fill_opt
@@ -493,6 +494,14 @@ create_statement:
         Params: $5,
     }}
   }
+| CREATE DATABASE not_exists_opt ID ddl_force_eof
+  {
+    $$ = &DBDDL{Action: CreateStr, DBName: string($4)}
+  }
+| CREATE SCHEMA not_exists_opt ID ddl_force_eof
+  {
+    $$ = &DBDDL{Action: CreateStr, DBName: string($4)}
+  }
 
 vindex_type_opt:
   {
@@ -585,6 +594,7 @@ column_type:
   }
 | char_type
 | time_type
+| spatial_type
 
 numeric_type:
   int_type length_opt
@@ -742,6 +752,40 @@ char_type:
 | SET '(' enum_values ')' charset_opt collate_opt
   {
     $$ = ColumnType{Type: string($1), EnumValues: $3, Charset: $5, Collate: $6}
+  }
+
+spatial_type:
+  GEOMETRY
+  {
+    $$ = ColumnType{Type: string($1)}
+  }
+| POINT
+  {
+    $$ = ColumnType{Type: string($1)}
+  }
+| LINESTRING
+  {
+    $$ = ColumnType{Type: string($1)}
+  }
+| POLYGON
+  {
+    $$ = ColumnType{Type: string($1)}
+  }
+| GEOMETRYCOLLECTION
+  {
+    $$ = ColumnType{Type: string($1)}
+  }
+| MULTIPOINT
+  {
+    $$ = ColumnType{Type: string($1)}
+  }
+| MULTILINESTRING
+  {
+    $$ = ColumnType{Type: string($1)}
+  }
+| MULTIPOLYGON
+  {
+    $$ = ColumnType{Type: string($1)}
   }
 
 enum_values:
@@ -935,6 +979,10 @@ index_info:
   PRIMARY KEY
   {
     $$ = &IndexInfo{Type: string($1) + " " + string($2), Name: NewColIdent("PRIMARY"), Primary: true, Unique: true}
+  }
+| SPATIAL index_or_key ID
+  {
+    $$ = &IndexInfo{Type: string($1) + " " + string($2), Name: NewColIdent(string($3)), Spatial: true, Unique: false}
   }
 | UNIQUE index_or_key ID
   {
@@ -1139,6 +1187,14 @@ drop_statement:
           exists = true
         }
     $$ = &DDL{Action: DropStr, Table: $4.ToViewName(), IfExists: exists}
+  }
+| DROP DATABASE exists_opt ID
+  {
+    $$ = &DBDDL{Action: DropStr, DBName: string($4)}
+  }
+| DROP SCHEMA exists_opt ID
+  {
+    $$ = &DBDDL{Action: DropStr, DBName: string($4)}
   }
 
 truncate_statement:
@@ -2770,6 +2826,7 @@ reserved_keyword:
 | RENAME
 | REPLACE
 | RIGHT
+| SCHEMA
 | SELECT
 | SEPARATOR
 | SET
@@ -2821,6 +2878,8 @@ non_reserved_keyword:
 | FLOAT_TYPE
 | FOREIGN
 | FULLTEXT
+| GEOMETRY
+| GEOMETRYCOLLECTION
 | GLOBAL
 | INT
 | INTEGER
@@ -2829,18 +2888,24 @@ non_reserved_keyword:
 | LANGUAGE
 | LAST_INSERT_ID
 | LESS
+| LINESTRING
 | LONGBLOB
 | LONGTEXT
 | MEDIUMBLOB
 | MEDIUMINT
 | MEDIUMTEXT
 | MODE
+| MULTILINESTRING
+| MULTIPOINT
+| MULTIPOLYGON
 | NAMES
 | NCHAR
 | NUMERIC
 | OFFSET
 | OPTIMIZE
 | PARTITION
+| POINT
+| POLYGON
 | PRIMARY
 | PROCEDURE
 | QUERY
