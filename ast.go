@@ -214,6 +214,7 @@ func (*Insert) iStatement()     {}
 func (*Update) iStatement()     {}
 func (*Delete) iStatement()     {}
 func (*Set) iStatement()        {}
+func (*DBDDL) iStatement()      {}
 func (*DDL) iStatement()        {}
 func (*Show) iStatement()       {}
 func (*Use) iStatement()        {}
@@ -616,6 +617,34 @@ func (node *Set) walkSubtree(visit Visit) error {
 	)
 }
 
+// DBDDL represents a CREATE, DROP database statement.
+type DBDDL struct {
+	Action   string
+	DBName   string
+	IfExists bool
+	Collate  string
+	Charset  string
+}
+
+// Format formats the node.
+func (node *DBDDL) Format(buf *TrackedBuffer) {
+	switch node.Action {
+	case CreateStr:
+		buf.WriteString(fmt.Sprintf("%s database %s", node.Action, node.DBName))
+	case DropStr:
+		exists := ""
+		if node.IfExists {
+			exists = " if exists"
+		}
+		buf.WriteString(fmt.Sprintf("%s database%s %v", node.Action, exists, node.DBName))
+	}
+}
+
+// walkSubtree walks the nodes of the subtree.
+func (node *DBDDL) walkSubtree(visit Visit) error {
+	return nil
+}
+
 // DDL represents a CREATE, ALTER, DROP, RENAME or TRUNCATE statement.
 // Table is set for AlterStr, DropStr, RenameStr, TruncateStr
 // NewName is set for AlterStr, CreateStr, RenameStr.
@@ -931,6 +960,9 @@ func (ct *ColumnType) Format(buf *TrackedBuffer) {
 	if ct.KeyOpt == colKeyUniqueKey {
 		opts = append(opts, keywordStrings[UNIQUE], keywordStrings[KEY])
 	}
+	if ct.KeyOpt == colKeySpatialKey {
+		opts = append(opts, keywordStrings[SPATIAL], keywordStrings[KEY])
+	}
 	if ct.KeyOpt == colKey {
 		opts = append(opts, keywordStrings[KEY])
 	}
@@ -1042,6 +1074,22 @@ func (ct *ColumnType) SQLType() querypb.Type {
 		return sqltypes.Set
 	case keywordStrings[JSON]:
 		return sqltypes.TypeJSON
+	case keywordStrings[GEOMETRY]:
+		return sqltypes.Geometry
+	case keywordStrings[POINT]:
+		return sqltypes.Geometry
+	case keywordStrings[LINESTRING]:
+		return sqltypes.Geometry
+	case keywordStrings[POLYGON]:
+		return sqltypes.Geometry
+	case keywordStrings[GEOMETRYCOLLECTION]:
+		return sqltypes.Geometry
+	case keywordStrings[MULTIPOINT]:
+		return sqltypes.Geometry
+	case keywordStrings[MULTILINESTRING]:
+		return sqltypes.Geometry
+	case keywordStrings[MULTIPOLYGON]:
+		return sqltypes.Geometry
 	}
 	panic("unimplemented type " + ct.Type)
 }
@@ -1054,7 +1102,7 @@ func (ct *ColumnType) walkSubtree(visit Visit) error {
 type IndexDefinition struct {
 	Info    *IndexInfo
 	Columns []*IndexColumn
-	Using   ColIdent
+	Options []*IndexOption
 }
 
 // Format formats the node.
@@ -1071,8 +1119,14 @@ func (idx *IndexDefinition) Format(buf *TrackedBuffer) {
 		}
 	}
 	buf.Myprintf(")")
-	if !idx.Using.IsEmpty() {
-		buf.Myprintf(" USING %v", idx.Using)
+
+	for _, opt := range idx.Options {
+		buf.Myprintf(" %s", opt.Name)
+		if opt.Using != "" {
+			buf.Myprintf(" %s", opt.Using)
+		} else {
+			buf.Myprintf(" %v", opt.Value)
+		}
 	}
 }
 
@@ -1095,6 +1149,7 @@ type IndexInfo struct {
 	Type    string
 	Name    ColIdent
 	Primary bool
+	Spatial bool
 	Unique  bool
 }
 
@@ -1124,6 +1179,13 @@ type LengthScaleOption struct {
 	Scale  *SQLVal
 }
 
+// IndexOption is used for trailing options for indexes: COMMENT, KEY_BLOCK_SIZE, USING
+type IndexOption struct {
+	Name  string
+	Value *SQLVal
+	Using string
+}
+
 // ColumnKeyOption indicates whether or not the given column is defined as an
 // index element and contains the type of the option
 type ColumnKeyOption int
@@ -1131,6 +1193,7 @@ type ColumnKeyOption int
 const (
 	colKeyNone ColumnKeyOption = iota
 	colKeyPrimary
+	colKeySpatialKey
 	colKeyUnique
 	colKeyUniqueKey
 	colKey
@@ -2635,12 +2698,12 @@ func (node *GroupConcatExpr) replace(from, to Expr) bool {
 
 // ValuesFuncExpr represents a function call.
 type ValuesFuncExpr struct {
-	Name ColIdent
+	Name *ColName
 }
 
 // Format formats the node.
 func (node *ValuesFuncExpr) Format(buf *TrackedBuffer) {
-	buf.Myprintf("values(%s)", node.Name.String())
+	buf.Myprintf("values(%v)", node.Name)
 }
 
 func (node *ValuesFuncExpr) walkSubtree(visit Visit) error {
@@ -3298,8 +3361,13 @@ func Backtick(in string) string {
 }
 
 func formatID(buf *TrackedBuffer, original, lowered string) {
+	isDbSystemVariable := false
+	if len(original) > 1 && original[:2] == "@@" {
+		isDbSystemVariable = true
+	}
+
 	for i, c := range original {
-		if !isLetter(uint16(c)) {
+		if !isLetter(uint16(c)) && (!isDbSystemVariable || !isCarat(uint16(c))) {
 			if i == 0 || !isDigit(uint16(c)) {
 				goto mustEscape
 			}
