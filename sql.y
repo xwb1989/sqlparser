@@ -298,6 +298,11 @@ command:
 | show_statement
 | use_statement
 | other_statement
+| /*empty*/
+  {
+    setParseTree(yylex, nil)
+  }
+
 
 select_statement:
   base_select order_by_opt limit_opt lock_opt

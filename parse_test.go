@@ -31,6 +31,12 @@ var (
 		input:  "select 1",
 		output: "select 1 from dual",
 	}, {
+		input:  "/* a comment */",
+		output: "<nil>",
+	}, {
+		input:  "/* another comment */",
+		output: "<nil>",
+	}, {
 		input: "select 1 from t",
 	}, {
 		input: "select .1 from t",
