@@ -857,6 +857,15 @@ var (
 		input:  "optimize foo",
 		output: "otheradmin",
 	}, {
+		input:  "lock tables foo",
+		output: "otheradmin",
+	}, {
+		input:  "unlock tables foo",
+		output: "otheradmin",
+	}, {
+		input:  "optimize foo",
+		output: "otheradmin",
+	}, {
 		input: "select /* EQ true */ 1 from t where a = true",
 	}, {
 		input: "select /* EQ false */ 1 from t where a = false",
