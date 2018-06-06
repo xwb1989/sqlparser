@@ -60,7 +60,7 @@ You only need the below if you plan to try and keep this library up to date with
 
 ```bash
 shopt -s nullglob
-VITESS=${GOPATH?}/src/github.com/vitessio/vitess/go/
+VITESS=${GOPATH?}/src/vitess.io/vitess/go/
 XWB1989=${GOPATH?}/src/github.com/xwb1989/sqlparser/
 
 # Create patches for everything that changed
@@ -95,13 +95,16 @@ rm ${VITESS?}/{sqltypes,bytes2,hack}/*.patch ${VITESS?}/*.patch
 TODO: Change these instructions to use git to copy the files, that'll make later patching easier.
 
 ```bash
-cd $GOPATH/src/github.com/xwb1989/sqlparser
+VITESS=${GOPATH?}/src/vitess.io/vitess/go/
+XWB1989=${GOPATH?}/src/github.com/xwb1989/sqlparser/
+
+cd ${XWB1989?}
 
 # Copy all the code
-cp -pr ../../vitessio/vitess/go/vt/sqlparser/ .
-cp -pr ../../vitessio/vitess/go/sqltypes dependency
-cp -pr ../../vitessio/vitess/go/bytes2 dependency
-cp -pr ../../vitessio/vitess/go/hack dependency
+cp -pr ${VITESS?}/vt/sqlparser/ .
+cp -pr ${VITESS?}/sqltypes dependency
+cp -pr ${VITESS?}/bytes2 dependency
+cp -pr ${VITESS?}/hack dependency
 
 # Delete some code we haven't ported
 rm dependency/sqltypes/arithmetic.go dependency/sqltypes/arithmetic_test.go dependency/sqltypes/event_token.go dependency/sqltypes/event_token_test.go dependency/sqltypes/proto3.go dependency/sqltypes/proto3_test.go dependency/sqltypes/query_response.go dependency/sqltypes/result.go dependency/sqltypes/result_test.go
@@ -109,11 +112,12 @@ rm dependency/sqltypes/arithmetic.go dependency/sqltypes/arithmetic_test.go depe
 # Some automated fixes
 
 # Fix imports
-sed -i '.bak' 's_github.com/vitessio/vitess/go/vt/proto/query_github.com/xwb1989/sqlparser/dependency/querypb_g' *.go dependency/sqltypes/*.go
-sed -i '.bak' 's_github.com/vitessio/vitess/go/_github.com/xwb1989/sqlparser/dependency/_g' *.go dependency/sqltypes/*.go
+sed -i '.bak' 's_vitess.io/vitess/go/vt/proto/query_github.com/xwb1989/sqlparser/dependency/querypb_g' *.go dependency/sqltypes/*.go
+sed -i '.bak' 's_vitess.io/vitess/go/_github.com/xwb1989/sqlparser/dependency/_g' *.go dependency/sqltypes/*.go
 
 # Copy the proto, but basically drop everything we don't want
-cp -pr ../../vitessio/vitess/go/vt/proto/query dependency/querypb
+cp -pr ${VITESS?}/vt/proto/query dependency/querypb
+
 sed -i '.bak' 's_.*Descriptor.*__g' dependency/querypb/*.go
 sed -i '.bak' 's_.*ProtoMessage.*__g' dependency/querypb/*.go
 
@@ -130,15 +134,17 @@ sed -i '.bak' 's/vterrors.New([^,]*, /errors.New(/g' *.go dependency/sqltypes/*.
 ### Testing
 
 ```bash
-cd $GOPATH/src/github.com/xwb1989/sqlparser
+VITESS=${GOPATH?}/src/vitess.io/vitess/go/
+XWB1989=${GOPATH?}/src/github.com/xwb1989/sqlparser/
+
+cd ${XWB1989?}
 
 # Test, fix and repeat
 go test ./...
 
 # Finally make some diffs (for later reference)
-cd $GOPATH/src/github.com
-diff -u vitessio/vitess/go/sqltypes/        xwb1989/sqlparser/dependency/sqltypes/ > xwb1989/sqlparser/patches/sqltypes.patch
-diff -u vitessio/vitess/go/bytes2/          xwb1989/sqlparser/dependency/bytes2/   > xwb1989/sqlparser/patches/bytes2.patch
-diff -u vitessio/vitess/go/vt/proto/query/  xwb1989/sqlparser/dependency/querypb/  > xwb1989/sqlparser/patches/querypb.patch
-diff -u vitessio/vitess/go/vt/sqlparser/    xwb1989/sqlparser/                     > xwb1989/sqlparser/patches/sqlparser.patch
+diff -u ${VITESS?}/sqltypes/        ${XWB1989?}/dependency/sqltypes/ > ${XWB1989?}/patches/sqltypes.patch
+diff -u ${VITESS?}/bytes2/          ${XWB1989?}/dependency/bytes2/   > ${XWB1989?}/patches/bytes2.patch
+diff -u ${VITESS?}/vt/proto/query/  ${XWB1989?}/dependency/querypb/  > ${XWB1989?}/patches/querypb.patch
+diff -u ${VITESS?}/vt/sqlparser/    ${XWB1989?}/                     > ${XWB1989?}/patches/sqlparser.patch
 ```
