@@ -4,10 +4,10 @@ Go package for parsing MySQL SQL queries.
 
 ## Notice
 
-The backbone of this repo is extracted from [youtube/vitess](https://github.com/youtube/vitess).
+The backbone of this repo is extracted from [vitessio/vitess](https://github.com/vitessio/vitess).
 
-Inside youtube/vitess there is a very nicely written sql parser. However as it's not a self-contained application, I created this one. 
-It applies the same LICENSE as youtube/vitess.
+Inside vitessio/vitess there is a very nicely written sql parser. However as it's not a self-contained application, I created this one.
+It applies the same LICENSE as vitessio/vitess.
 
 ## Usage
 
@@ -54,13 +54,13 @@ See [parse_test.go](https://github.com/xwb1989/sqlparser/blob/master/parse_test.
 
 ## Porting Instructions
 
-You only need the below if you plan to try and keep this library up to date with [youtube/vitess](https://github.com/youtube/vitess).
+You only need the below if you plan to try and keep this library up to date with [vitessio/vitess](https://github.com/vitessio/vitess).
 
 ### Keeping up to date
 
 ```bash
 shopt -s nullglob
-VITESS=${GOPATH?}/src/github.com/youtube/vitess/go/
+VITESS=${GOPATH?}/src/github.com/vitessio/vitess/go/
 XWB1989=${GOPATH?}/src/github.com/xwb1989/sqlparser/
 
 # Create patches for everything that changed
@@ -92,14 +92,16 @@ rm ${VITESS?}/{sqltypes,bytes2,hack}/*.patch ${VITESS?}/*.patch
 
 ### Fresh install
 
+TODO: Change these instructions to use git to copy the files, that'll make later patching easier.
+
 ```bash
 cd $GOPATH/src/github.com/xwb1989/sqlparser
 
 # Copy all the code
-cp -pr ../../youtube/vitess/go/vt/sqlparser/ .
-cp -pr ../../youtube/vitess/go/sqltypes dependency
-cp -pr ../../youtube/vitess/go/bytes2 dependency
-cp -pr ../../youtube/vitess/go/hack dependency
+cp -pr ../../vitessio/vitess/go/vt/sqlparser/ .
+cp -pr ../../vitessio/vitess/go/sqltypes dependency
+cp -pr ../../vitessio/vitess/go/bytes2 dependency
+cp -pr ../../vitessio/vitess/go/hack dependency
 
 # Delete some code we haven't ported
 rm dependency/sqltypes/arithmetic.go dependency/sqltypes/arithmetic_test.go dependency/sqltypes/event_token.go dependency/sqltypes/event_token_test.go dependency/sqltypes/proto3.go dependency/sqltypes/proto3_test.go dependency/sqltypes/query_response.go dependency/sqltypes/result.go dependency/sqltypes/result_test.go
@@ -107,11 +109,11 @@ rm dependency/sqltypes/arithmetic.go dependency/sqltypes/arithmetic_test.go depe
 # Some automated fixes
 
 # Fix imports
-sed -i '.bak' 's_github.com/youtube/vitess/go/vt/proto/query_github.com/xwb1989/sqlparser/dependency/querypb_g' *.go dependency/sqltypes/*.go
-sed -i '.bak' 's_github.com/youtube/vitess/go/_github.com/xwb1989/sqlparser/dependency/_g' *.go dependency/sqltypes/*.go
+sed -i '.bak' 's_github.com/vitessio/vitess/go/vt/proto/query_github.com/xwb1989/sqlparser/dependency/querypb_g' *.go dependency/sqltypes/*.go
+sed -i '.bak' 's_github.com/vitessio/vitess/go/_github.com/xwb1989/sqlparser/dependency/_g' *.go dependency/sqltypes/*.go
 
 # Copy the proto, but basically drop everything we don't want
-cp -pr ../../youtube/vitess/go/vt/proto/query dependency/querypb
+cp -pr ../../vitessio/vitess/go/vt/proto/query dependency/querypb
 sed -i '.bak' 's_.*Descriptor.*__g' dependency/querypb/*.go
 sed -i '.bak' 's_.*ProtoMessage.*__g' dependency/querypb/*.go
 
@@ -135,8 +137,8 @@ go test ./...
 
 # Finally make some diffs (for later reference)
 cd $GOPATH/src/github.com
-diff -u youtube/vitess/go/sqltypes/        xwb1989/sqlparser/dependency/sqltypes/ > xwb1989/sqlparser/patches/sqltypes.patch
-diff -u youtube/vitess/go/bytes2/          xwb1989/sqlparser/dependency/bytes2/   > xwb1989/sqlparser/patches/bytes2.patch
-diff -u youtube/vitess/go/vt/proto/query/  xwb1989/sqlparser/dependency/querypb/  > xwb1989/sqlparser/patches/querypb.patch
-diff -u youtube/vitess/go/vt/sqlparser/    xwb1989/sqlparser/                     > xwb1989/sqlparser/patches/sqlparser.patch
+diff -u vitessio/vitess/go/sqltypes/        xwb1989/sqlparser/dependency/sqltypes/ > xwb1989/sqlparser/patches/sqltypes.patch
+diff -u vitessio/vitess/go/bytes2/          xwb1989/sqlparser/dependency/bytes2/   > xwb1989/sqlparser/patches/bytes2.patch
+diff -u vitessio/vitess/go/vt/proto/query/  xwb1989/sqlparser/dependency/querypb/  > xwb1989/sqlparser/patches/querypb.patch
+diff -u vitessio/vitess/go/vt/sqlparser/    xwb1989/sqlparser/                     > xwb1989/sqlparser/patches/sqlparser.patch
 ```
