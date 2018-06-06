@@ -59,18 +59,24 @@ You only need the below if you plan to try and keep this library up to date with
 ### Keeping up to date
 
 ```bash
-cd $GOPATH/src/github.com/youtube/vitess/go
+shopt -s nullglob
+VITESS=${GOPATH?}/src/github.com/youtube/vitess/go/
+XWB1989=${GOPATH?}/src/github.com/xwb1989/sqlparser/
 
 # Create patches for everything that changed
 LASTIMPORT=1b7879cb91f1dfe1a2dfa06fea96e951e3a7aec5
-git format-patch $LASTIMPORT vt/sqlparser
-git format-patch $LASTIMPORT sqltypes
-git format-patch $LASTIMPORT bytes2
-git format-patch $LASTIMPORT hack
+for path in ${VITESS?}/{vt/sqlparser,sqltypes,bytes2,hack}; do
+	cd ${path}
+	git format-patch ${LASTIMPORT?} .
+done;
 
-# Apply them to the repo
-cd $GOPATH/src/github.com/xwb1989/sqlparser
-git am -p4 ../../youtube/vitess/go/*.patch
+# Apply patches to the dependencies
+cd ${XWB1989?}
+git am --directory dependency -p2 ${VITESS?}/{sqltypes,bytes2,hack}/*.patch
+
+# Apply the main patches to the repo
+cd ${XWB1989?}
+git am -p4 ${VITESS?}/vt/sqlparser/*.patch
 
 # If you encounter diff failures, manually fix them with
 patch -p4 < .git/rebase-apply/patch
@@ -78,7 +84,10 @@ patch -p4 < .git/rebase-apply/patch
 git add name_of_files
 git am --continue
 
-# Finally update the LASTIMPORT in this README.
+# Cleanup
+rm ${VITESS?}/{sqltypes,bytes2,hack}/*.patch ${VITESS?}/*.patch
+
+# and Finally update the LASTIMPORT in this README.
 ```
 
 ### Fresh install
