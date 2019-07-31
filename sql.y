@@ -908,6 +908,10 @@ unsigned_opt:
   {
     $$ = BoolVal(true)
   }
+| SIGNED
+  {
+    $$ = BoolVal(false)
+  }
 
 zero_fill_opt:
   {
