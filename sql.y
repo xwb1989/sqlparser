@@ -1034,10 +1034,16 @@ column_comment_opt:
 index_definition:
   index_info '(' index_column_list ')' index_option_list
   {
+    if $1.Name.val == "" && len($3) > 0 {
+        $1.Name.val = $3[0].Column.val
+    }
     $$ = &IndexDefinition{Info: $1, Columns: $3, Options: $5}
   }
 | index_info '(' index_column_list ')'
   {
+    if $1.Name.val == "" && len($3) > 0 {
+        $1.Name.val = $3[0].Column.val
+    }
     $$ = &IndexDefinition{Info: $1, Columns: $3}
   }
 
@@ -1096,6 +1102,10 @@ index_info:
 | index_or_key ID
   {
     $$ = &IndexInfo{Type: string($1), Name: NewColIdent(string($2)), Unique: false}
+  }
+| index_or_key
+  {
+    $$ = &IndexInfo{Type: string($1), Unique: false}
   }
 
 index_or_key:
