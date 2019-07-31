@@ -1894,6 +1894,34 @@ func TestCreateTable(t *testing.T) {
 			"	unique by_username3 (username) key_block_size 4\n" +
 			")",
 	},
+		{
+			// test anonymous key definition
+			input: "create table t (\n" +
+				"	id int auto_increment,\n" +
+				"	username varchar,\n" +
+				"	email varchar,\n" +
+				"	primary key (id),\n" +
+				"	key (username)\n" +
+				")",
+			output: "create table t (\n" +
+				"	id int auto_increment,\n" +
+				"	username varchar,\n" +
+				"	email varchar,\n" +
+				"	primary key (id),\n" +
+				"	key username (username)\n" +
+				")",
+		},
+		{
+			// test signed col
+			input: "create table t (\n" +
+				"	id int auto_increment,\n" +
+				"	col_tinyint3_signed tinyint(3) signed\n" +
+				")",
+			output: "create table t (\n" +
+				"	id int auto_increment,\n" +
+				"	col_tinyint3_signed tinyint(3)\n" +
+				")",
+		},
 	}
 	for _, tcase := range testCases {
 		tree, err := ParseStrictDDL(tcase.input)
