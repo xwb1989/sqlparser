@@ -156,7 +156,7 @@ var keywords = map[string]int{
 	"double":              DOUBLE,
 	"drop":                DROP,
 	"duplicate":           DUPLICATE,
-	"each":                UNUSED,
+	"each":                EACH,
 	"else":                ELSE,
 	"elseif":              UNUSED,
 	"enclosed":            UNUSED,
@@ -392,6 +392,12 @@ var keywords = map[string]int{
 	"year":                YEAR,
 	"year_month":          UNUSED,
 	"zerofill":            ZEROFILL,
+	"definer":             DEFINER,
+	"@":				   AT,
+	"after": 			   AFTER,
+	"row": 				   ROW,
+	"follows": 			   FOLLOWS,
+	"precedes":   		   PRECEDES,
 }
 
 // keywordStrings contains the reverse mapping of token to keyword strings
