@@ -13,9 +13,10 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-
 %{
 package sqlparser
+
+import "bytes"
 
 func setParseTree(yylex interface{}, stmt Statement) {
   yylex.(*Tokenizer).ParseTree = stmt
@@ -46,6 +47,22 @@ func decNesting(yylex interface{}) {
 // return EOF early.
 func forceEOF(yylex interface{}) {
   yylex.(*Tokenizer).ForceEOF = true
+}
+
+func skipDDLEnd(yylex interface{}) {
+  yylex.(*Tokenizer).IsSkipDDL = true
+}
+
+func getSkipBytes(yylex interface{}) []byte {
+  tkn := yylex.(*Tokenizer)
+  buf := bytes.NewBuffer(tkn.lastToken)
+  ch := tkn.lastChar
+  for ch != eofChar {
+    tkn.next()
+    buf.WriteByte(byte(ch))
+    ch = tkn.lastChar
+  }
+  return buf.Bytes()
 }
 
 %}
@@ -301,7 +318,7 @@ func forceEOF(yylex interface{}) {
 %type <definer> definer_opt
 %type <str> trigger_name trigger_body user_str host_str
 %type <trigger> trigger_time trigger_order
-%type <bytes> trigger_event
+%type <bytes> trigger_event skip_ddl_end
 
 
 %start any_command
@@ -565,18 +582,7 @@ trigger_name:
   { $$ = string($1) }
 
 trigger_body:
-  ID
-  {
-    $$ = string($1)
-  }
-| non_reserved_keyword
-  {
-    $$ = string($1)
-  }
-| reserved_keyword
-  {
-    $$ = string($1)
-  }
+  skip_ddl_end { $$ = string($1) }
 
 trigger_time:
   trigger_name BEFORE trigger_event ON table_name FOR EACH ROW trigger_order trigger_body
@@ -588,7 +594,7 @@ trigger_time:
       Table: $5,
       IsPrecede: $9.IsPrecede,
       Related: $9.Related,
-      Body: $10,
+      Body: getSkipBytes(yylex),
     }
   }
 | trigger_name AFTER trigger_event ON table_name FOR EACH ROW trigger_order trigger_body
@@ -600,7 +606,7 @@ trigger_time:
       Table: $5,
       IsPrecede: $9.IsPrecede,
       Related: $9.Related,
-      Body: $10,
+      Body: getSkipBytes(yylex),
     }
   }
 
@@ -610,7 +616,7 @@ trigger_event:
 | DELETE
 
 trigger_order:
-  { $$ = &Trigger{ IsPrecede: false, Related: "" } }
+  { $$ = &Trigger{ IsPrecede: false, Related: ""} }
 | FOLLOWS ID { $$ = &Trigger{ IsPrecede: false, Related: string($2)} }
 | PRECEDES ID { $$ = &Trigger{ IsPrecede: true, Related: string($2)} }
 
@@ -3246,4 +3252,10 @@ ddl_force_eof:
 | reserved_sql_id
   {
     forceEOF(yylex)
+  }
+
+
+skip_ddl_end:
+  {
+    skipDDLEnd(yylex)
   }

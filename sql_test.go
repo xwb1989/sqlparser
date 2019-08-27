@@ -10,11 +10,11 @@ func TestStatement(t *testing.T)  {
 	trigger1()
 
 	trigger2()
-
-
+	//
+	//
 	trigger3()
-
-	global()
+	//
+	//global()
 }
 
 func trigger1() {
@@ -32,6 +32,7 @@ func trigger1() {
 		case CreateTrggerStr:
 			log.Infof("create trigger %v", st.Trigger)
 			log.Infof("definer %v", st.Definer)
+			log.Infof("body %s", st.Trigger.Body)
 		}
 	case *DBDDL:
 		log.Infof(st.DBName)
@@ -53,6 +54,7 @@ func trigger3() {
 		case CreateTrggerStr:
 			log.Infof("create trigger %v", st.Trigger)
 			log.Infof("definer %v", st.Definer)
+			log.Infof("body %s", st.Trigger.Body)
 		}
 	case *DBDDL:
 		log.Infof(st.DBName)
@@ -75,6 +77,7 @@ func trigger2() {
 		case CreateTrggerStr:
 			log.Infof("create trigger %v", st.Trigger)
 			log.Infof("definer %v", st.Definer)
+			log.Infof("body %s", st.Trigger.Body)
 		}
 	case *DBDDL:
 		log.Infof(st.DBName)
@@ -82,7 +85,7 @@ func trigger2() {
 }
 
 func global()  {
-	sql := "set @@session.gtid_mode=on"
+	sql := "set @@session.gtid_mode=on # get master status"
 	stmt, err := Parse(sql)
 	if err != nil {
 		log.Fatal(err)
@@ -93,5 +96,7 @@ func global()  {
 		log.Infof("table %v", st.Table)
 	case *DBDDL:
 		log.Infof(st.DBName)
+	case *Set:
+		log.Infof("comments %v", st)
 	}
 }

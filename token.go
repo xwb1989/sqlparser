@@ -47,6 +47,7 @@ type Tokenizer struct {
 	nesting        int
 	multi          bool
 	specialComment *Tokenizer
+	IsSkipDDL        bool
 
 	buf     []byte
 	bufPos  int
@@ -469,6 +470,10 @@ func (tkn *Tokenizer) Scan() (int, []byte) {
 	}
 	if tkn.lastChar == 0 {
 		tkn.next()
+	}
+
+	if tkn.IsSkipDDL {
+		return 0, nil
 	}
 
 	if tkn.ForceEOF {

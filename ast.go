@@ -669,13 +669,13 @@ type Definer struct {
 }
 
 type Trigger struct {
-	Name      string      // trigger name
-	IsBefore  bool        // is before or after
-	Event     string      // update, insert, delete
-	Table     TableName   // trigger table
-	Body      interface{} // trigger body
-	IsPrecede bool        // is precede or follows
-	Related   string      // other trigger name
+	Name      string    // trigger name
+	IsBefore  bool      // is before or after
+	Event     string    // update, insert, delete
+	Table     TableName // trigger table
+	Body      []byte    // trigger body
+	IsPrecede bool      // is precede or follows
+	Related   string    // other trigger name
 }
 
 // DDL strings.
