@@ -658,7 +658,7 @@ create_statement:
 | CREATE definer_opt trigger_time ddl_force_eof
   {
     // trigger
-    $$ = &DDL{Action: CreateTrggerStr, Definer: $2, Trigger: $3}
+    $$ = &DDL{Action: CreateTriggerStr, Definer: $2, Trigger: $3}
   }
 
 vindex_type_opt:

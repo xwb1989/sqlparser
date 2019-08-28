@@ -693,7 +693,7 @@ const (
 	VindexOwnerStr = "owner"
 
 	// CREATE TRIGGER
-	CreateTrggerStr = "create trigger"
+	CreateTriggerStr = "create trigger"
 )
 
 // Format formats the node.

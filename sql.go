@@ -3186,7 +3186,7 @@ yydefault:
 //line sql.y:659
 		{
 			// trigger
-			yyVAL.statement = &DDL{Action: CreateTrggerStr, Definer: yyDollar[2].definer, Trigger: yyDollar[3].trigger}
+			yyVAL.statement = &DDL{Action: CreateTriggerStr, Definer: yyDollar[2].definer, Trigger: yyDollar[3].trigger}
 		}
 	case 82:
 		yyDollar = yyS[yypt-0 : yypt+1]
