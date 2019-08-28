@@ -13,9 +13,10 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-
 %{
 package sqlparser
+
+import "bytes"
 
 func setParseTree(yylex interface{}, stmt Statement) {
   yylex.(*Tokenizer).ParseTree = stmt
@@ -46,6 +47,22 @@ func decNesting(yylex interface{}) {
 // return EOF early.
 func forceEOF(yylex interface{}) {
   yylex.(*Tokenizer).ForceEOF = true
+}
+
+func skipDDLEnd(yylex interface{}) {
+  yylex.(*Tokenizer).IsSkipDDL = true
+}
+
+func getSkipBytes(yylex interface{}) []byte {
+  tkn := yylex.(*Tokenizer)
+  buf := bytes.NewBuffer(tkn.lastToken)
+  ch := tkn.lastChar
+  for ch != eofChar {
+    tkn.next()
+    buf.WriteByte(byte(ch))
+    ch = tkn.lastChar
+  }
+  return buf.Bytes()
 }
 
 %}
@@ -110,6 +127,8 @@ func forceEOF(yylex interface{}) {
   vindexParam   VindexParam
   vindexParams  []VindexParam
   showFilter    *ShowFilter
+  trigger       *Trigger
+  definer       *Definer
 }
 
 %token LEX_ERROR
@@ -160,7 +179,7 @@ func forceEOF(yylex interface{}) {
 %token <bytes> STATUS VARIABLES
 
 // Transaction Tokens
-%token <bytes> BEGIN START TRANSACTION COMMIT ROLLBACK
+%token <bytes> BEGIN START TRANSACTION COMMIT ROLLBACK LOW_PRIORITY QUICK
 
 // Type Tokens
 %token <bytes> BIT TINYINT SMALLINT MEDIUMINT INT INTEGER BIGINT INTNUM
@@ -191,6 +210,9 @@ func forceEOF(yylex interface{}) {
 
 // Match
 %token <bytes> MATCH AGAINST BOOLEAN LANGUAGE WITH QUERY EXPANSION
+
+// Trigger matched
+%token <bytes> DEFINER AFTER ROW FOLLOWS PRECEDES BEFORE EACH AT
 
 // MySQL reserved words that are unused by this grammar will map to this token.
 %token <bytes> UNUSED
@@ -292,6 +314,12 @@ func forceEOF(yylex interface{}) {
 %type <vindexParams> vindex_param_list vindex_params_opt
 %type <colIdent> vindex_type vindex_type_opt
 %type <bytes> alter_object_type
+
+%type <definer> definer_opt
+%type <str> trigger_name trigger_body user_str host_str
+%type <trigger> trigger_time trigger_order
+%type <bytes> trigger_event skip_ddl_end
+
 
 %start any_command
 
@@ -529,6 +557,69 @@ set_session_or_global:
     $$ = GlobalStr
   }
 
+definer_opt:
+  TRIGGER
+  {
+    $$ = &Definer{}
+  }
+| DEFINER '=' user_str AT host_str TRIGGER
+  { $$ = &Definer{
+    User: string($3),
+    Host: string($5),
+  }
+  }
+
+user_str:
+  ID
+  { $$ = string($1) }
+
+host_str:
+  ID
+  { $$ = string($1) }
+
+trigger_name:
+  ID
+  { $$ = string($1) }
+
+trigger_body:
+  skip_ddl_end { $$ = string($1) }
+
+trigger_time:
+  trigger_name BEFORE trigger_event ON table_name FOR EACH ROW trigger_order trigger_body
+  {
+    $$ = &Trigger{
+      Name: $1,
+      IsBefore: true,
+      Event: string($3),
+      Table: $5,
+      IsPrecede: $9.IsPrecede,
+      Related: $9.Related,
+      Body: getSkipBytes(yylex),
+    }
+  }
+| trigger_name AFTER trigger_event ON table_name FOR EACH ROW trigger_order trigger_body
+  {
+    $$ = &Trigger {
+      Name: $1,
+      IsBefore: false,
+      Event: string($3),
+      Table: $5,
+      IsPrecede: $9.IsPrecede,
+      Related: $9.Related,
+      Body: getSkipBytes(yylex),
+    }
+  }
+
+trigger_event:
+  INSERT
+| UPDATE
+| DELETE
+
+trigger_order:
+  { $$ = &Trigger{ IsPrecede: false, Related: ""} }
+| FOLLOWS ID { $$ = &Trigger{ IsPrecede: false, Related: string($2)} }
+| PRECEDES ID { $$ = &Trigger{ IsPrecede: true, Related: string($2)} }
+
 create_statement:
   create_table_prefix table_spec
   {
@@ -563,6 +654,11 @@ create_statement:
 | CREATE SCHEMA not_exists_opt ID ddl_force_eof
   {
     $$ = &DBDDL{Action: CreateStr, DBName: string($4)}
+  }
+| CREATE definer_opt trigger_time ddl_force_eof
+  {
+    // trigger
+    $$ = &DDL{Action: CreateTriggerStr, Definer: $2, Trigger: $3}
   }
 
 vindex_type_opt:
@@ -3156,4 +3252,10 @@ ddl_force_eof:
 | reserved_sql_id
   {
     forceEOF(yylex)
+  }
+
+
+skip_ddl_end:
+  {
+    skipDDLEnd(yylex)
   }
