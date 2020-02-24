@@ -213,7 +213,7 @@ func forceEOF(yylex interface{}) {
 %type <tableExpr> table_reference table_factor join_table
 %type <joinCondition> join_condition join_condition_opt on_expression_opt
 %type <tableNames> table_name_list
-%type <str> inner_join outer_join straight_join natural_join
+%type <str> inner_join outer_join straight_join natural_join cross_join
 %type <tableName> table_name into_table_name
 %type <aliasedTableName> aliased_table_name
 %type <indexHints> index_hint_list
@@ -1746,6 +1746,10 @@ join_table:
   {
     $$ = &JoinTableExpr{LeftExpr: $1, Join: $2, RightExpr: $3, Condition: $4}
   }
+| table_reference cross_join table_factor join_condition_opt
+    {
+      $$ = &JoinTableExpr{LeftExpr: $1, Join: $2, RightExpr: $3, Condition: $4}
+    }
 | table_reference straight_join table_factor on_expression_opt
   {
     $$ = &JoinTableExpr{LeftExpr: $1, Join: $2, RightExpr: $3, Condition: $4}
@@ -1811,9 +1815,11 @@ inner_join:
   {
     $$ = JoinStr
   }
-| CROSS JOIN
+
+cross_join:
+  CROSS JOIN
   {
-    $$ = JoinStr
+    $$ = CrossJoinStr
   }
 
 straight_join:
