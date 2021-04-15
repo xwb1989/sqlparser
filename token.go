@@ -188,6 +188,7 @@ var keywords = map[string]int{
 	"grant":               UNUSED,
 	"group":               GROUP,
 	"group_concat":        GROUP_CONCAT,
+	"groups":              UNUSED,
 	"having":              HAVING,
 	"high_priority":       UNUSED,
 	"hour_microsecond":    UNUSED,
