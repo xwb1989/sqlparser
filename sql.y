@@ -3098,6 +3098,8 @@ non_reserved_keyword:
 | SPATIAL
 | START
 | STATUS
+| SUBJECT
+| SYSTEM
 | TEXT
 | THAN
 | TIME
