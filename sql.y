@@ -3051,6 +3051,7 @@ non_reserved_keyword:
 | GEOMETRY
 | GEOMETRYCOLLECTION
 | GLOBAL
+| GROUPS
 | INT
 | INTEGER
 | ISOLATION
@@ -3097,6 +3098,8 @@ non_reserved_keyword:
 | SPATIAL
 | START
 | STATUS
+| SUBJECT
+| SYSTEM
 | TEXT
 | THAN
 | TIME
