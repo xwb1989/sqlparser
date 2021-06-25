@@ -110,12 +110,13 @@ func forceEOF(yylex interface{}) {
   vindexParam   VindexParam
   vindexParams  []VindexParam
   showFilter    *ShowFilter
+  over *Over
 }
 
 %token LEX_ERROR
 %left <bytes> UNION
 %token <bytes> SELECT STREAM INSERT UPDATE DELETE FROM WHERE GROUP HAVING ORDER BY LIMIT OFFSET FOR
-%token <bytes> ALL DISTINCT AS EXISTS ASC DESC INTO DUPLICATE KEY DEFAULT SET LOCK KEYS
+%token <bytes> ALL DISTINCT AS EXISTS ASC DESC INTO DUPLICATE KEY DEFAULT SET LOCK KEYS OF
 %token <bytes> VALUES LAST_INSERT_ID
 %token <bytes> NEXT VALUE SHARE MODE
 %token <bytes> SQL_NO_CACHE SQL_CACHE
@@ -189,6 +190,12 @@ func forceEOF(yylex interface{}) {
 %token <bytes> SUBSTR SUBSTRING
 %token <bytes> GROUP_CONCAT SEPARATOR
 
+// Window functions
+%token <bytes> OVER WINDOW GROUPING GROUPS
+%token <bytes> AVG BIT_AND BIT_OR BIT_XOR COUNT JSON_ARRAYAGG JSON_OBJECTAGG MAX MIN STDDEV_POP STDDEV STD STDDEV_SAMP
+%token <bytes> SUM VAR_POP VARIANCE VAR_SAMP CUME_DIST DENSE_RANK FIRST_VALUE LAG LAST_VALUE LEAD NTH_VALUE NTILE
+%token <bytes> ROW_NUMBER PERCENT_RANK RANK
+
 // Match
 %token <bytes> MATCH AGAINST BOOLEAN LANGUAGE WITH QUERY EXPANSION
 
@@ -208,7 +215,7 @@ func forceEOF(yylex interface{}) {
 %type <expr> like_escape_opt
 %type <selectExprs> select_expression_list select_expression_list_opt
 %type <selectExpr> select_expression
-%type <expr> expression
+%type <expr> expression group_by
 %type <tableExprs> from_opt table_references
 %type <tableExpr> table_reference table_factor join_table
 %type <joinCondition> join_condition join_condition_opt on_expression_opt
@@ -224,9 +231,10 @@ func forceEOF(yylex interface{}) {
 %type <ins> insert_data
 %type <expr> value value_expression num_val
 %type <expr> function_call_keyword function_call_nonkeyword function_call_generic function_call_conflict
+%type <expr> function_call_window function_call_aggregate_with_window
 %type <str> is_suffix
 %type <colTuple> col_tuple
-%type <exprs> expression_list
+%type <exprs> expression_list group_by_list
 %type <values> tuple_list
 %type <valTuple> row_tuple tuple_or_empty
 %type <expr> tuple_expression
@@ -236,9 +244,10 @@ func forceEOF(yylex interface{}) {
 %type <when> when_expression
 %type <expr> expression_opt else_expression_opt
 %type <exprs> group_by_opt
-%type <expr> having_opt
+%type <expr> having_opt having
 %type <orderBy> order_by_opt order_list
 %type <order> order
+%type <over> over over_opt
 %type <str> asc_desc_opt
 %type <limit> limit_opt
 %type <str> lock_opt
@@ -256,7 +265,7 @@ func forceEOF(yylex interface{}) {
 %type <showFilter> like_or_where_opt
 %type <byt> exists_opt
 %type <empty> not_exists_opt non_add_drop_or_rename_operation to_opt index_opt constraint_opt
-%type <bytes> reserved_keyword non_reserved_keyword
+%type <bytes> reserved_keyword non_reserved_keyword column_name_safe_reserved_keyword
 %type <colIdent> sql_id reserved_sql_id col_alias as_ci_opt using_opt
 %type <expr> charset_value
 %type <tableIdent> table_id reserved_table_id table_alias as_opt_id
@@ -1647,6 +1656,32 @@ select_expression:
     $$ = &StarExpr{TableName: TableName{Qualifier: $1, Name: $3}}
   }
 
+// TODO: handle ROWS UNBOUNDED PRECEDING et al
+over:
+  OVER sql_id
+  {
+    $$ = &Over{WindowName: $2}
+  }
+| OVER openb order_by_opt closeb
+  {
+    $$ = &Over{OrderBy: $3}
+  }
+| OVER openb PARTITION BY expression_list order_by_opt closeb
+  {
+    $$ = &Over{PartitionBy: $5, OrderBy: $6}
+  }
+
+over_opt:
+  {
+    $$ = nil
+  }
+| over
+  {
+    $$ = $1
+  }
+
+
+
 as_ci_opt:
   {
     $$ = ColIdent{}
@@ -1661,7 +1696,18 @@ as_ci_opt:
   }
 
 col_alias:
-  sql_id
+    ID
+    {
+      $$ = NewColIdent(string($1))
+    }
+  | non_reserved_keyword
+    {
+      $$ = NewColIdent(string($1))
+    }
+  | column_name_safe_reserved_keyword
+    {
+      $$ = NewColIdent(string($1))
+    }
 | STRING
   {
     $$ = NewColIdent(string($1))
@@ -1695,7 +1741,7 @@ table_factor:
   {
     $$ = $1
   }
-| subquery as_opt table_id
+| subquery as_opt table_alias
   {
     $$ = &AliasedTableExpr{Expr:$1, As: $3}
   }
@@ -1801,6 +1847,10 @@ as_opt_id:
 
 table_alias:
   table_id
+| column_name_safe_reserved_keyword
+{
+  $$ = NewTableIdent(string($1))
+}
 | STRING
   {
     $$ = NewTableIdent(string($1))
@@ -2224,6 +2274,8 @@ value_expression:
 | function_call_keyword
 | function_call_nonkeyword
 | function_call_conflict
+| function_call_window
+| function_call_aggregate_with_window
 
 /*
   Regular function calls without special token or syntax, guaranteed to not
@@ -2241,6 +2293,129 @@ function_call_generic:
 | table_id '.' reserved_sql_id openb select_expression_list_opt closeb
   {
     $$ = &FuncExpr{Qualifier: $1, Name: $3, Exprs: $5}
+  }
+
+/*
+   Special aggregate function calls that can't be treated like a normal function call, because they have an optional
+   OVER clause (not legal on any other non-window, non-aggregate function)
+ */
+function_call_aggregate_with_window:
+ MAX openb distinct_opt select_expression_list closeb over_opt
+  {
+    $$ = &FuncExpr{Name: NewColIdent(string($1)), Exprs: $4, Distinct: $3 == DistinctStr, Over: $6}
+  }
+| AVG openb distinct_opt select_expression_list closeb over_opt
+  {
+    $$ = &FuncExpr{Name: NewColIdent(string($1)), Exprs: $4, Distinct: $3 == DistinctStr, Over: $6}
+  }
+| BIT_AND openb select_expression_list closeb over_opt
+  {
+    $$ = &FuncExpr{Name: NewColIdent(string($1)), Exprs: $3, Over: $5}
+  }
+| BIT_OR openb select_expression_list closeb over_opt
+  {
+    $$ = &FuncExpr{Name: NewColIdent(string($1)), Exprs: $3, Over: $5}
+  }
+| BIT_XOR openb select_expression_list closeb over_opt
+  {
+    $$ = &FuncExpr{Name: NewColIdent(string($1)), Exprs: $3, Over: $5}
+  }
+| COUNT openb distinct_opt select_expression_list closeb over_opt
+  {
+    $$ = &FuncExpr{Name: NewColIdent(string($1)), Exprs: $4, Distinct: $3 == DistinctStr, Over: $6}
+  }
+| JSON_ARRAYAGG openb select_expression_list closeb over_opt
+  {
+    $$ = &FuncExpr{Name: NewColIdent(string($1)), Exprs: $3, Over: $5}
+  }
+| JSON_OBJECTAGG openb select_expression_list closeb over_opt
+  {
+    $$ = &FuncExpr{Name: NewColIdent(string($1)), Exprs: $3, Over: $5}
+  }
+| MIN openb distinct_opt select_expression_list closeb over_opt
+  {
+    $$ = &FuncExpr{Name: NewColIdent(string($1)), Exprs: $4, Distinct: $3 == DistinctStr, Over: $6}
+  }
+| STDDEV_POP openb select_expression_list closeb over_opt
+  {
+    $$ = &FuncExpr{Name: NewColIdent(string($1)), Exprs: $3, Over: $5}
+  }
+| STDDEV openb select_expression_list closeb over_opt
+  {
+    $$ = &FuncExpr{Name: NewColIdent(string($1)), Exprs: $3, Over: $5}
+  }
+| STD openb select_expression_list closeb over_opt
+  {
+    $$ = &FuncExpr{Name: NewColIdent(string($1)), Exprs: $3, Over: $5}
+  }
+| STDDEV_SAMP openb select_expression_list closeb over_opt
+  {
+    $$ = &FuncExpr{Name: NewColIdent(string($1)), Exprs: $3, Over: $5}
+  }
+| SUM openb distinct_opt select_expression_list closeb over_opt
+  {
+    $$ = &FuncExpr{Name: NewColIdent(string($1)), Exprs: $4, Distinct: $3 == DistinctStr, Over: $6}
+  }
+| VAR_POP openb select_expression_list closeb over_opt
+  {
+    $$ = &FuncExpr{Name: NewColIdent(string($1)), Exprs: $3, Over: $5}
+  }
+| VARIANCE openb select_expression_list closeb over_opt
+  {
+    $$ = &FuncExpr{Name: NewColIdent(string($1)), Exprs: $3, Over: $5}
+  }
+| VAR_SAMP openb select_expression_list closeb over_opt
+  {
+    $$ = &FuncExpr{Name: NewColIdent(string($1)), Exprs: $3, Over: $5}
+  }
+
+/*
+  Function calls with an OVER expression, only valid for certain aggregate and window functions
+*/
+function_call_window:
+  CUME_DIST openb closeb over
+  {
+    $$ = &FuncExpr{Name: NewColIdent(string($1)), Over: $4}
+  }
+| DENSE_RANK openb closeb over
+  {
+    $$ = &FuncExpr{Name: NewColIdent(string($1)), Over: $4}
+  }
+| FIRST_VALUE openb select_expression closeb over
+  {
+    $$ = &FuncExpr{Name: NewColIdent(string($1)), Exprs: SelectExprs{$3}, Over: $5}
+  }
+| LAG openb select_expression_list closeb over
+  {
+    $$ = &FuncExpr{Name: NewColIdent(string($1)), Exprs: $3, Over: $5}
+  }
+| LAST_VALUE openb select_expression closeb over
+  {
+    $$ = &FuncExpr{Name: NewColIdent(string($1)), Exprs: SelectExprs{$3}, Over: $5}
+  }
+| LEAD openb select_expression_list closeb over
+  {
+    $$ = &FuncExpr{Name: NewColIdent(string($1)), Exprs: $3, Over: $5}
+  }
+| NTH_VALUE openb select_expression_list closeb over
+  {
+    $$ = &FuncExpr{Name: NewColIdent(string($1)), Exprs: $3, Over: $5}
+  }
+| NTILE openb closeb over
+  {
+    $$ = &FuncExpr{Name: NewColIdent(string($1)), Over: $4}
+  }
+| PERCENT_RANK openb closeb over
+  {
+    $$ = &FuncExpr{Name: NewColIdent(string($1)), Over: $4}
+  }
+| RANK openb closeb over
+  {
+    $$ = &FuncExpr{Name: NewColIdent(string($1)), Over: $4}
+  }
+| ROW_NUMBER openb closeb over
+  {
+    $$ = &FuncExpr{Name: NewColIdent(string($1)), Over: $4}
   }
 
 /*
@@ -2579,18 +2754,48 @@ group_by_opt:
   {
     $$ = nil
   }
-| GROUP BY expression_list
+| GROUP BY group_by_list
   {
     $$ = $3
+  }
+
+group_by_list:
+  group_by
+  {
+    $$ = Exprs{$1}
+  }
+| group_by_list ',' group_by
+  {
+    $$ = append($1, $3)
+  }
+
+group_by:
+  expression
+  {
+    $$ = $1
+  }
+| column_name_safe_reserved_keyword
+  {
+    $$ = &ColName{Name: NewColIdent(string($1))}
   }
 
 having_opt:
   {
     $$ = nil
   }
-| HAVING expression
+| HAVING having
   {
     $$ = $2
+  }
+
+having:
+  expression
+  {
+    $$ = $1
+  }
+| column_name_safe_reserved_keyword
+  {
+    $$ = &ColName{Name: NewColIdent(string($1))}
   }
 
 order_by_opt:
@@ -2616,6 +2821,10 @@ order:
   expression asc_desc_opt
   {
     $$ = &Order{Expr: $1, Direction: $2}
+  }
+| column_name_safe_reserved_keyword asc_desc_opt
+  {
+    $$ = &Order{Expr: &ColName{Name: NewColIdent(string($1))}, Direction: $2}
   }
 
 asc_desc_opt:
@@ -2936,19 +3145,22 @@ reserved_keyword:
 | AS
 | ASC
 | AUTO_INCREMENT
+| AVG
 | BETWEEN
 | BINARY
+| BIT_AND
+| BIT_OR
+| BIT_XOR
 | BY
 | CASE
 | COLLATE
 | CONVERT
+| COUNT
 | CREATE
 | CROSS
 | CURRENT_DATE
 | CURRENT_TIME
 | CURRENT_TIMESTAMP
-| SUBSTR
-| SUBSTRING
 | DATABASE
 | DATABASES
 | DEFAULT
@@ -2987,7 +3199,9 @@ reserved_keyword:
 | LOCALTIMESTAMP
 | LOCK
 | MATCH
+| MAX
 | MAXVALUE
+| MIN
 | MOD
 | NATURAL
 | NEXT // next should be doable as non-reserved, but is not due to the special `select next num_val` query that vitess supports
@@ -3006,7 +3220,13 @@ reserved_keyword:
 | SEPARATOR
 | SET
 | SHOW
+| STD
+| STDDEV
+| STDDEV_POP
 | STRAIGHT_JOIN
+| SUBSTR
+| SUBSTRING
+| SUM
 | TABLE
 | TABLES
 | THEN
@@ -3021,6 +3241,9 @@ reserved_keyword:
 | UTC_TIME
 | UTC_TIMESTAMP
 | VALUES
+| VARIANCE
+| VAR_POP
+| VAR_SAMP
 | WHEN
 | WHERE
 
@@ -3130,6 +3353,38 @@ non_reserved_keyword:
 | WRITE
 | YEAR
 | ZEROFILL
+
+// Reserved keywords that cause grammar conflicts in some places, but are safe to use as column name / alias identifiers.
+// These keywords should also go in reserved_keyword.
+column_name_safe_reserved_keyword:
+  AVG
+| BIT_AND
+| BIT_OR
+| BIT_XOR
+| COUNT
+| CUME_DIST
+| DENSE_RANK
+| FIRST_VALUE
+| JSON_ARRAYAGG
+| JSON_OBJECTAGG
+| LAG
+| LAST_VALUE
+| LEAD
+| MAX
+| MIN
+| NTH_VALUE
+| NTILE
+| PERCENT_RANK
+| RANK
+| ROW_NUMBER
+| STD
+| STDDEV
+| STDDEV_POP
+| STDDEV_SAMP
+| SUM
+| VARIANCE
+| VAR_POP
+| VAR_SAMP
 
 openb:
   '('

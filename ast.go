@@ -1524,6 +1524,36 @@ func (node *AliasedExpr) walkSubtree(visit Visit) error {
 	)
 }
 
+// Over defines an OVER expression in a select
+type Over struct {
+	PartitionBy Exprs
+	OrderBy OrderBy
+	WindowName ColIdent
+}
+
+// Format formats the node.
+func (node *Over) Format(buf *TrackedBuffer) {
+	if !node.WindowName.IsEmpty() {
+		buf.Myprintf("over %v", node.WindowName)
+	} else {
+		buf.Myprintf("over (")
+		if len(node.PartitionBy) > 0 {
+			buf.Myprintf("partition by %v", node.PartitionBy)
+		}
+		if len(node.OrderBy) > 0 {
+			buf.Myprintf("%v", node.OrderBy)
+		}
+		buf.Myprintf(")")
+	}
+}
+
+func (node *Over) walkSubtree(visit Visit) error {
+	if node == nil {
+		return nil
+	}
+	return Walk(visit, node.PartitionBy, node.OrderBy, node.WindowName)
+}
+
 // Nextval defines the NEXT VALUE expression.
 type Nextval struct {
 	Expr Expr
@@ -2633,6 +2663,7 @@ type FuncExpr struct {
 	Name      ColIdent
 	Distinct  bool
 	Exprs     SelectExprs
+	Over *Over
 }
 
 // Format formats the node.
@@ -2648,6 +2679,10 @@ func (node *FuncExpr) Format(buf *TrackedBuffer) {
 	// if they match a reserved word. So, print the
 	// name as is.
 	buf.Myprintf("%s(%s%v)", node.Name.String(), distinct, node.Exprs)
+
+	if node.Over != nil {
+		buf.Myprintf(" %v", node.Over)
+	}
 }
 
 func (node *FuncExpr) walkSubtree(visit Visit) error {
@@ -2659,6 +2694,7 @@ func (node *FuncExpr) walkSubtree(visit Visit) error {
 		node.Qualifier,
 		node.Name,
 		node.Exprs,
+		node.Over,
 	)
 }
 

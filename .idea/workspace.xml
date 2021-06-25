@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="abf9035b-3621-4cdc-a2c4-2863e8dd2c0e" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/ast.go" beforeDir="false" afterPath="$PROJECT_DIR$/ast.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sql.go" beforeDir="false" afterPath="$PROJECT_DIR$/sql.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sql.y" beforeDir="false" afterPath="$PROJECT_DIR$/sql.y" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/token.go" beforeDir="false" afterPath="$PROJECT_DIR$/token.go" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="GOROOT" path="$USER_HOME$/go/go1.16" />
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectId" id="1uRc7xCHm6pCpJ3xpFmOdpTJuwC" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="go.import.settings.migrated" value="true" />
+    <property name="go.sdk.automatically.set" value="true" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+  </component>
+  <component name="RunManager">
+    <configuration name="parse_test.go" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="sqlparser" />
+      <working_directory value="$PROJECT_DIR$" />
+      <framework value="gotest" />
+      <kind value="FILE" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$/parse_test.go" />
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Go Test.parse_test.go" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="WindowStateProjectService">
+    <state width="1535" height="373" key="GridCell.Tab.0.bottom" timestamp="1624633954986">
+      <screen x="-3154" y="119" width="3154" height="1310" />
+    </state>
+    <state width="1535" height="373" key="GridCell.Tab.0.bottom/-3154.119.3154.1310/0.23.1536.937@-3154.119.3154.1310" timestamp="1624633954986" />
+    <state width="1535" height="373" key="GridCell.Tab.0.center" timestamp="1624633954985">
+      <screen x="-3154" y="119" width="3154" height="1310" />
+    </state>
+    <state width="1535" height="373" key="GridCell.Tab.0.center/-3154.119.3154.1310/0.23.1536.937@-3154.119.3154.1310" timestamp="1624633954985" />
+    <state width="1535" height="373" key="GridCell.Tab.0.left" timestamp="1624633954985">
+      <screen x="-3154" y="119" width="3154" height="1310" />
+    </state>
+    <state width="1535" height="373" key="GridCell.Tab.0.left/-3154.119.3154.1310/0.23.1536.937@-3154.119.3154.1310" timestamp="1624633954985" />
+    <state width="1535" height="373" key="GridCell.Tab.0.right" timestamp="1624633954986">
+      <screen x="-3154" y="119" width="3154" height="1310" />
+    </state>
+    <state width="1535" height="373" key="GridCell.Tab.0.right/-3154.119.3154.1310/0.23.1536.937@-3154.119.3154.1310" timestamp="1624633954986" />
+    <state x="-2568" y="695" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2" timestamp="1624631972250">
+      <screen x="-3154" y="119" width="3154" height="1310" />
+    </state>
+    <state x="-2568" y="695" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2/-3154.119.3154.1310/0.23.1536.937@-3154.119.3154.1310" timestamp="1624631972250" />
+    <state x="-2668" y="529" width="604" height="490" key="find.popup" timestamp="1624634091716">
+      <screen x="-3154" y="119" width="3154" height="1310" />
+    </state>
+    <state x="-2668" y="529" width="604" height="490" key="find.popup/-3154.119.3154.1310/0.23.1536.937@-3154.119.3154.1310" timestamp="1624634091716" />
+  </component>
+</project>
