@@ -1,4 +1,4 @@
-module github.com/KevinGlinski/sqlparser
+module github.com/kevinglinski/sqlparser
 
 go 1.16
 
