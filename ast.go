@@ -249,6 +249,7 @@ type Select struct {
 	Comments    Comments
 	Distinct    string
 	Hints       string
+	CommonTableExprs TableExprs
 	SelectExprs SelectExprs
 	From        TableExprs
 	Where       *Where
@@ -289,6 +290,17 @@ func (node *Select) SetLimit(limit *Limit) {
 
 // Format formats the node.
 func (node *Select) Format(buf *TrackedBuffer) {
+	if len(node.CommonTableExprs) > 0 {
+		buf.Myprintf("with ")
+		for i, cte := range node.CommonTableExprs {
+			if i > 0 {
+				buf.Myprintf(", ")
+			}
+			buf.Myprintf("%v", cte)
+		}
+		buf.Myprintf(" ")
+	}
+
 	buf.Myprintf("select %v%s%s%s%v from %v%v%v%v%v%v%s",
 		node.Comments, node.Cache, node.Distinct, node.Hints, node.SelectExprs,
 		node.From, node.Where,
@@ -1659,6 +1671,7 @@ type TableExpr interface {
 func (*AliasedTableExpr) iTableExpr() {}
 func (*ParenTableExpr) iTableExpr()   {}
 func (*JoinTableExpr) iTableExpr()    {}
+func (*CommonTableExpr) iTableExpr()    {}
 
 // AliasedTableExpr represents a table expression
 // coupled with an optional alias or index hint.
@@ -1699,6 +1712,38 @@ func (node *AliasedTableExpr) RemoveHints() *AliasedTableExpr {
 	noHints := *node
 	noHints.Hints = nil
 	return &noHints
+}
+
+type CommonTableExpr struct {
+	*AliasedTableExpr
+	Columns Columns
+}
+
+func (e *CommonTableExpr) Format(buf *TrackedBuffer) {
+	sq := e.AliasedTableExpr.Expr.(*Subquery)
+	as := e.AliasedTableExpr.As
+
+	var cols strings.Builder
+	if len(e.Columns) > 0 {
+		cols.WriteRune('(')
+		for i, col := range e.Columns {
+			if i > 0 {
+				cols.WriteString(", ")
+			}
+			cols.WriteString(col.String())
+		}
+		cols.WriteString(") ")
+	}
+
+	buf.Myprintf("%v %sas %v", as, cols.String(), sq)
+}
+
+func (e *CommonTableExpr) walkSubtree(visit Visit) error {
+	return Walk(
+		visit,
+		e.AliasedTableExpr,
+		e.Columns,
+	)
 }
 
 // SimpleTableExpr represents a simple table expression.

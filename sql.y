@@ -216,8 +216,8 @@ func forceEOF(yylex interface{}) {
 %type <selectExprs> select_expression_list select_expression_list_opt
 %type <selectExpr> select_expression
 %type <expr> expression group_by
-%type <tableExprs> from_opt table_references
-%type <tableExpr> table_reference table_factor join_table
+%type <tableExprs> from_opt table_references with_clause cte_list
+%type <tableExpr> table_reference table_factor join_table common_table_expression
 %type <joinCondition> join_condition join_condition_opt on_expression_opt
 %type <tableNames> table_name_list
 %type <str> inner_join outer_join straight_join natural_join cross_join
@@ -368,6 +368,46 @@ base_select:
   SELECT comment_opt cache_opt distinct_opt straight_join_opt select_expression_list from_opt where_expression_opt group_by_opt having_opt
   {
     $$ = &Select{Comments: Comments($2), Cache: $3, Distinct: $4, Hints: $5, SelectExprs: $6, From: $7, Where: NewWhere(WhereStr, $8), GroupBy: GroupBy($9), Having: NewWhere(HavingStr, $10)}
+  }
+
+base_select:
+  SELECT comment_opt cache_opt distinct_opt straight_join_opt select_expression_list where_expression_opt group_by_opt having_opt
+  {
+    $$ = &Select{Comments: Comments($2), Cache: $3, Distinct: $4, Hints: $5, SelectExprs: $6, From: TableExprs{&AliasedTableExpr{Expr:TableName{Name: NewTableIdent("dual")}}}, Where: NewWhere(WhereStr, $7), GroupBy: GroupBy($8), Having: NewWhere(HavingStr, $9)}
+  }
+| SELECT comment_opt cache_opt distinct_opt straight_join_opt select_expression_list FROM table_references where_expression_opt group_by_opt having_opt
+  {
+    $$ = &Select{Comments: Comments($2), Cache: $3, Distinct: $4, Hints: $5, SelectExprs: $6, From: $8, Where: NewWhere(WhereStr, $9), GroupBy: GroupBy($10), Having: NewWhere(HavingStr, $11)}
+  }
+| with_clause SELECT comment_opt cache_opt distinct_opt straight_join_opt select_expression_list FROM table_references where_expression_opt group_by_opt having_opt
+  {
+    $$ = &Select{CommonTableExprs: $1, Comments: Comments($3), Cache: $4, Distinct: $5, Hints: $6, SelectExprs: $7, From: $9, Where: NewWhere(WhereStr, $10), GroupBy: GroupBy($11), Having: NewWhere(HavingStr, $12)}
+  }
+
+with_clause:
+  WITH cte_list
+  {
+    $$ = $2
+  }
+
+cte_list:
+  common_table_expression
+  {
+    $$ = TableExprs{$1}
+  }
+| cte_list ',' common_table_expression
+  {
+    $$ = append($1, $3)
+  }
+
+common_table_expression:
+  table_alias AS subquery
+  {
+    $$ = &CommonTableExpr{&AliasedTableExpr{Expr:$3, As: $1}, nil}
+  }
+| table_alias openb ins_column_list closeb AS subquery
+  {
+    $$ = &CommonTableExpr{&AliasedTableExpr{Expr:$6, As: $1}, $3}
   }
 
 union_lhs:
@@ -3246,6 +3286,7 @@ reserved_keyword:
 | VAR_SAMP
 | WHEN
 | WHERE
+| WITH
 
 /*
   These are non-reserved Vitess, because they don't cause conflicts in the grammar.
