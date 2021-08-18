@@ -3232,6 +3232,8 @@ reserved_keyword:
 | IS
 | JOIN
 | KEY
+| LAG
+| LEAD
 | LEFT
 | LIKE
 | LIMIT
