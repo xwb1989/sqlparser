@@ -1535,6 +1535,12 @@ func TestConvert(t *testing.T) {
 	},{
 		input:  "select cast('abc' as integer) from t",
 		output: "select CAST('abc' AS integer) from t",
+	},{
+		input:  "select cast('abc' as bool) from t",
+		output: "select CAST('abc' AS bool) from t",
+	},{
+		input:  "select cast('abc' as boolean) from t",
+		output: "select CAST('abc' AS boolean) from t",
 	}, {
 		input: "select convert('abc', int) from t",
 	}, {
