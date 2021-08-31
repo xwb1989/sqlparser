@@ -2802,13 +2802,18 @@ func (node *SubstrExpr) walkSubtree(visit Visit) error {
 // ConvertExpr represents a call to CONVERT(expr, type)
 // or it's equivalent CAST(expr AS type). Both are rewritten to the former.
 type ConvertExpr struct {
+	IsCast bool
 	Expr Expr
 	Type *ConvertType
 }
 
 // Format formats the node.
 func (node *ConvertExpr) Format(buf *TrackedBuffer) {
-	buf.Myprintf("convert(%v, %v)", node.Expr, node.Type)
+	if node.IsCast {
+		buf.Myprintf("CAST(%v AS %v)", node.Expr, node.Type)
+	} else {
+		buf.Myprintf("convert(%v, %v)", node.Expr, node.Type)
+	}
 }
 
 func (node *ConvertExpr) walkSubtree(visit Visit) error {

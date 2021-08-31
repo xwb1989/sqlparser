@@ -2256,7 +2256,7 @@ function_call_keyword:
   }
 | CAST openb expression AS convert_type closeb
   {
-    $$ = &ConvertExpr{Expr: $3, Type: $5}
+    $$ = &ConvertExpr{IsCast: true, Expr: $3, Type: $5}
   }
 | CONVERT openb expression USING charset closeb
   {
@@ -2458,6 +2458,23 @@ convert_type:
   {
     $$ = &ConvertType{Type: string($1)}
   }
+| INT
+  {
+    $$ = &ConvertType{Type: string($1)}
+  }
+| INTEGER
+  {
+    $$ = &ConvertType{Type: string($1)}
+  }
+| BOOLEAN
+  {
+    $$ = &ConvertType{Type: string($1)}
+  }
+| BOOL
+  {
+    $$ = &ConvertType{Type: string($1)}
+  }
+
 
 expression_opt:
   {

@@ -1528,7 +1528,23 @@ func TestConvert(t *testing.T) {
 		output string
 	}{{
 		input:  "select cast('abc' as date) from t",
-		output: "select convert('abc', date) from t",
+		output: "select CAST('abc' AS date) from t",
+	},{
+		input:  "select cast('abc' as int) from t",
+		output: "select CAST('abc' AS int) from t",
+	},{
+		input:  "select cast('abc' as integer) from t",
+		output: "select CAST('abc' AS integer) from t",
+	},{
+		input:  "select cast('abc' as bool) from t",
+		output: "select CAST('abc' AS bool) from t",
+	},{
+		input:  "select cast('abc' as boolean) from t",
+		output: "select CAST('abc' AS boolean) from t",
+	}, {
+		input: "select convert('abc', int) from t",
+	}, {
+		input: "select convert('abc', integer) from t",
 	}, {
 		input: "select convert('abc', binary(4)) from t",
 	}, {
