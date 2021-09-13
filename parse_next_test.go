@@ -34,6 +34,7 @@ func TestParseNextValid(t *testing.T) {
 
 	tokens := NewTokenizer(&sql)
 	for i, tcase := range validSQL {
+		t.Log(tcase.input)
 		input := tcase.input + ";"
 		want := tcase.output
 		if want == "" {
@@ -68,6 +69,8 @@ func TestParseNextErrors(t *testing.T) {
 
 		sql := tcase.input + "; select 1 from t"
 		tokens := NewStringTokenizer(sql)
+
+		t.Log(sql)
 
 		// The first statement should be an error
 		_, err := ParseNext(tokens)

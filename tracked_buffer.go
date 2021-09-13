@@ -60,6 +60,17 @@ func (buf *TrackedBuffer) WriteNode(node SQLNode) *TrackedBuffer {
 // The name must be something other than the usual Printf() to avoid "go vet"
 // warnings due to our custom format specifiers.
 func (buf *TrackedBuffer) Myprintf(format string, values ...interface{}) {
+	buf.astPrintf(nil, format, values...)
+}
+
+// astPrintf is for internal use by the ast structs
+func (buf *TrackedBuffer) astPrintf(currentNode SQLNode, format string, values ...interface{}) {
+	//currentExpr, checkParens := currentNode.(Expr)
+	//if checkParens {
+	//	// expressions that have Precedence Syntactic will never need parens
+	//	checkParens = precedenceFor(currentExpr) != Syntactic
+	//}
+
 	end := len(format)
 	fieldnum := 0
 	for i := 0; i < end; {
@@ -74,7 +85,8 @@ func (buf *TrackedBuffer) Myprintf(format string, values ...interface{}) {
 			break
 		}
 		i++ // '%'
-		switch format[i] {
+		token := format[i]
+		switch token {
 		case 'c':
 			switch v := values[fieldnum].(type) {
 			case byte:
@@ -93,6 +105,23 @@ func (buf *TrackedBuffer) Myprintf(format string, values ...interface{}) {
 			default:
 				panic(fmt.Sprintf("unexpected TrackedBuffer type %T", v))
 			}
+		//case 'l', 'r', 'v':
+		//	left := token != 'r'
+		//	value := values[fieldnum]
+		//	expr := getExpressionForParensEval(checkParens, value)
+		//
+		//	if expr == nil {
+		//		buf.formatter(value.(SQLNode))
+		//	} else {
+		//		needParens := needParens(currentExpr, expr, left)
+		//		if needParens {
+		//			buf.WriteByte('(')
+		//		}
+		//		buf.formatter(expr)
+		//		if needParens {
+		//			buf.WriteByte(')')
+		//		}
+		//	}
 		case 'v':
 			node := values[fieldnum].(SQLNode)
 			if buf.nodeFormatter == nil {
@@ -101,13 +130,23 @@ func (buf *TrackedBuffer) Myprintf(format string, values ...interface{}) {
 				buf.nodeFormatter(buf, node)
 			}
 		case 'a':
-			buf.WriteArg(values[fieldnum].(string))
+			buf.WriteArgWithPrefix("", values[fieldnum].(string))
 		default:
 			panic("unexpected")
 		}
 		fieldnum++
 		i++
 	}
+}
+
+func getExpressionForParensEval(checkParens bool, value interface{}) Expr {
+	if checkParens {
+		expr, isExpr := value.(Expr)
+		if isExpr {
+			return expr
+		}
+	}
+	return nil
 }
 
 // WriteArg writes a value argument into the buffer along with
@@ -118,6 +157,15 @@ func (buf *TrackedBuffer) WriteArg(arg string) {
 		offset: buf.Len(),
 		length: len(arg),
 	})
+	buf.WriteString(arg)
+}
+
+func (buf *TrackedBuffer) WriteArgWithPrefix(prefix, arg string) {
+	buf.bindLocations = append(buf.bindLocations, bindLocation{
+		offset: buf.Len(),
+		length: len(prefix) + len(arg),
+	})
+	buf.WriteString(prefix)
 	buf.WriteString(arg)
 }
 

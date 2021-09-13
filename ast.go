@@ -245,19 +245,19 @@ func (*ParenSelect) iSelectStatement() {}
 
 // Select represents a SELECT statement.
 type Select struct {
-	Cache       string
-	Comments    Comments
-	Distinct    string
-	Hints       string
+	Cache            string
+	Comments         Comments
+	Distinct         string
+	Hints            string
 	CommonTableExprs TableExprs
-	SelectExprs SelectExprs
-	From        TableExprs
-	Where       *Where
-	GroupBy     GroupBy
-	Having      *Where
-	OrderBy     OrderBy
-	Limit       *Limit
-	Lock        string
+	SelectExprs      SelectExprs
+	From             TableExprs
+	Where            *Where
+	GroupBy          GroupBy
+	Having           *Where
+	OrderBy          OrderBy
+	Limit            *Limit
+	Lock             string
 }
 
 // Select.Distinct
@@ -401,13 +401,19 @@ func (node *ParenSelect) walkSubtree(visit Visit) error {
 	)
 }
 
+// UnionSelect represents union type and select statement after first select statement.
+type UnionSelect struct {
+	UnionType string
+	Statement SelectStatement
+}
+
 // Union represents a UNION statement.
 type Union struct {
-	Type        string
-	Left, Right SelectStatement
-	OrderBy     OrderBy
-	Limit       *Limit
-	Lock        string
+	FirstStatement SelectStatement
+	UnionSelects   []*UnionSelect
+	OrderBy        OrderBy
+	Limit          *Limit
+	Lock           string
 }
 
 // Union.Type
@@ -429,18 +435,43 @@ func (node *Union) SetLimit(limit *Limit) {
 
 // Format formats the node.
 func (node *Union) Format(buf *TrackedBuffer) {
-	buf.Myprintf("%v %s %v%v%v%s", node.Left, node.Type, node.Right,
-		node.OrderBy, node.Limit, node.Lock)
+	buf.astPrintf(node, "%v", node.FirstStatement)
+	for _, us := range node.UnionSelects {
+		buf.astPrintf(node, "%v", us)
+	}
+	buf.astPrintf(node, "%v%v%s", node.OrderBy, node.Limit, node.Lock)
+}
+
+// Format formats the node.
+func (node *UnionSelect) Format(buf *TrackedBuffer) {
+	buf.Myprintf(" %s %v", node.UnionType, node.Statement)
 }
 
 func (node *Union) walkSubtree(visit Visit) error {
 	if node == nil {
 		return nil
 	}
+
+	nodes := []SQLNode{node.FirstStatement}
+
+	for _, n := range node.UnionSelects {
+		nodes = append(nodes, n)
+	}
+
 	return Walk(
 		visit,
-		node.Left,
-		node.Right,
+		nodes...,
+	)
+}
+
+func (node *UnionSelect) walkSubtree(visit Visit) error {
+	if node == nil {
+		return nil
+	}
+
+	return Walk(
+		visit,
+		node.Statement,
 	)
 }
 
@@ -1539,8 +1570,8 @@ func (node *AliasedExpr) walkSubtree(visit Visit) error {
 // Over defines an OVER expression in a select
 type Over struct {
 	PartitionBy Exprs
-	OrderBy OrderBy
-	WindowName ColIdent
+	OrderBy     OrderBy
+	WindowName  ColIdent
 }
 
 // Format formats the node.
@@ -1671,7 +1702,7 @@ type TableExpr interface {
 func (*AliasedTableExpr) iTableExpr() {}
 func (*ParenTableExpr) iTableExpr()   {}
 func (*JoinTableExpr) iTableExpr()    {}
-func (*CommonTableExpr) iTableExpr()    {}
+func (*CommonTableExpr) iTableExpr()  {}
 
 // AliasedTableExpr represents a table expression
 // coupled with an optional alias or index hint.
@@ -2708,7 +2739,7 @@ type FuncExpr struct {
 	Name      ColIdent
 	Distinct  bool
 	Exprs     SelectExprs
-	Over *Over
+	Over      *Over
 }
 
 // Format formats the node.

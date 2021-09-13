@@ -348,13 +348,17 @@ select_statement:
     sel.Lock = $4
     $$ = sel
   }
-| union_lhs union_op union_rhs order_by_opt limit_opt lock_opt
+| openb select_statement closeb order_by_opt limit_opt lock_opt
   {
-    $$ = &Union{Type: $2, Left: $1, Right: $3, OrderBy: $4, Limit: $5, Lock: $6}
+    $$ = &Union{FirstStatement: &ParenSelect{Select: $2}, OrderBy: $4, Limit:$5, Lock:$6}
+  }
+| select_statement union_op union_rhs order_by_opt limit_opt lock_opt
+  {
+    $$ = Unionize($1, $3, $2, $4, $5, str($6))
   }
 | SELECT comment_opt cache_opt NEXT num_val for_from table_name
   {
-    $$ = &Select{Comments: Comments($2), Cache: $3, SelectExprs: SelectExprs{Nextval{Expr: $5}}, From: TableExprs{&AliasedTableExpr{Expr: $7}}}
+    $$ = NewSelect(Comments($2), SelectExprs{&Nextval{Expr: $5}}, []string{$3}/*options*/, TableExprs{&AliasedTableExpr{Expr: $7}}, nil/*where*/, nil/*groupBy*/, nil/*having*/)
   }
 
 stream_statement:

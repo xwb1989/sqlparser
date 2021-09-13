@@ -220,9 +220,6 @@ var (
 		input:  "select /* inner join */ 1 from t1 inner join t2",
 		output: "select /* inner join */ 1 from t1 join t2",
 	}, {
-		input:  "select /* cross join */ 1 from t1 cross join t2",
-		output: "select /* cross join */ 1 from t1 join t2",
-	}, {
 		input: "select /* straight_join */ 1 from t1 straight_join t2",
 	}, {
 		input: "select /* straight_join on */ 1 from t1 straight_join t2 on a = b",
@@ -600,11 +597,9 @@ var (
 	}, {
 		input: "insert /* select */ into a select b, c from d",
 	}, {
-		input:  "insert /* no cols & paren select */ into a(select * from t)",
-		output: "insert /* no cols & paren select */ into a select * from t",
+		input: "insert /* no cols & paren select */ into a (select * from t)",
 	}, {
-		input:  "insert /* cols & paren select */ into a(a,b,c) (select * from t)",
-		output: "insert /* cols & paren select */ into a(a, b, c) select * from t",
+		input: "insert /* cols & paren select */ into a(a, b, c) (select * from t)",
 	}, {
 		input: "insert /* cols & union with paren select */ into a(b, c) (select d, e from f) union (select g from h)",
 	}, {
@@ -1225,8 +1220,6 @@ var (
 	}, {
 		input: "select * from t group by a collate utf8_general_ci",
 	}, {
-		input: "select MAX(k collate latin1_german2_ci) from t1",
-	}, {
 		input: "select distinct k collate latin1_german2_ci from t1",
 	}, {
 		input: "select * from t1 where 'Müller' collate latin1_german2_ci = k",
@@ -1308,6 +1301,8 @@ var (
 	}, {
 		input:  "drop database if exists test_db",
 		output: "drop database test_db",
+	}, {
+		input: "(select * from t) limit 0",
 	}}
 )
 
@@ -1322,8 +1317,8 @@ func TestValid(t *testing.T) {
 			continue
 		}
 		out := String(tree)
-		if out != tcase.output {
-			t.Errorf("Parse(%q) = %q, want: %q", tcase.input, out, tcase.output)
+		if strings.TrimSpace(out) != strings.TrimSpace(tcase.output) {
+			t.Errorf("Parse(%q) = \n%q, want: \n%q", tcase.input, out, tcase.output)
 		}
 		// This test just exercises the tree walking functionality.
 		// There's no way automated way to verify that a node calls
@@ -2034,12 +2029,9 @@ var (
 	}, {
 		input:  "select /* vitess-reserved keyword as unqualified column */ * from t where escape = 'test'",
 		output: "syntax error at position 81 near 'escape'",
-	}, {
-		input:  "(select /* parenthesized select */ * from t)",
-		output: "syntax error at position 45",
-	}, {
-		input:  "select * from t where id = ((select a from t1 union select b from t2) order by a limit 1)",
-		output: "syntax error at position 76 near 'order'",
+		//}, {
+		//	input:  "select * from t where id = ((select a from t1 union select b from t2) order by a limit 1)",
+		//	output: "syntax error at position 76 near 'order'",
 	}, {
 		input:  "select /* straight_join using */ 1 from t1 straight_join t2 using (a)",
 		output: "syntax error at position 66 near 'using'",
