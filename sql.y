@@ -111,6 +111,7 @@ func forceEOF(yylex interface{}) {
   vindexParams  []VindexParam
   showFilter    *ShowFilter
   over *Over
+  intervalType	  IntervalTypes
 }
 
 %token LEX_ERROR
@@ -124,6 +125,7 @@ func forceEOF(yylex interface{}) {
 %left <bytes> ON USING
 %token <empty> '(' ',' ')'
 %token <bytes> ID HEX STRING INTEGRAL FLOAT HEXNUM VALUE_ARG LIST_ARG COMMENT COMMENT_KEYWORD BIT_LITERAL
+%token <bytes> EXTRACT
 %token <bytes> NULL TRUE FALSE
 
 // Precedence dictated by mysql. But the vitess grammar is simplified.
@@ -185,6 +187,7 @@ func forceEOF(yylex interface{}) {
 %token <bytes> CURRENT_TIMESTAMP DATABASE CURRENT_DATE
 %token <bytes> CURRENT_TIME LOCALTIME LOCALTIMESTAMP
 %token <bytes> UTC_DATE UTC_TIME UTC_TIMESTAMP
+%token <bytes> DAY DAY_HOUR DAY_MICROSECOND DAY_MINUTE DAY_SECOND HOUR HOUR_MICROSECOND HOUR_MINUTE HOUR_SECOND MICROSECOND MINUTE MINUTE_MICROSECOND MINUTE_SECOND MONTH QUARTER SECOND SECOND_MICROSECOND YEAR_MONTH WEEK
 %token <bytes> REPLACE
 %token <bytes> CONVERT CAST
 %token <bytes> SUBSTR SUBSTRING
@@ -246,6 +249,7 @@ func forceEOF(yylex interface{}) {
 %type <exprs> group_by_opt
 %type <expr> having_opt having
 %type <orderBy> order_by_opt order_list
+%type <intervalType> interval_time_stamp interval
 %type <order> order
 %type <over> over over_opt
 %type <str> asc_desc_opt
@@ -354,7 +358,7 @@ select_statement:
   }
 | select_statement union_op union_rhs order_by_opt limit_opt lock_opt
   {
-    $$ = Unionize($1, $3, $2, $4, $5, str($6))
+    $$ = Unionize($1, $3, $2, $4, $5, string($6))
   }
 | SELECT comment_opt cache_opt NEXT num_val for_from table_name
   {
@@ -2569,6 +2573,97 @@ function_call_nonkeyword:
   {
     $$ = &FuncExpr{Name:NewColIdent("current_time")}
   }
+| EXTRACT openb interval FROM expression closeb
+  {
+    $$ = &ExtractFuncExpr{IntervalTypes: $3, Expr: $5}
+  }
+
+
+interval:
+ interval_time_stamp
+ {}
+| DAY_HOUR
+  {
+	$$=IntervalDayHour
+  }
+| DAY_MICROSECOND
+  {
+	$$=IntervalDayMicrosecond
+  }
+| DAY_MINUTE
+  {
+	$$=IntervalDayMinute
+  }
+| DAY_SECOND
+  {
+	$$=IntervalDaySecond
+  }
+| HOUR_MICROSECOND
+  {
+	$$=IntervalHourMicrosecond
+  }
+| HOUR_MINUTE
+  {
+	$$=IntervalHourMinute
+  }
+| HOUR_SECOND
+  {
+	$$=IntervalHourSecond
+  }
+| MINUTE_MICROSECOND
+  {
+	$$=IntervalMinuteMicrosecond
+  }
+| MINUTE_SECOND
+  {
+	$$=IntervalMinuteSecond
+  }
+| SECOND_MICROSECOND
+  {
+	$$=IntervalSecondMicrosecond
+  }
+| YEAR_MONTH
+  {
+	$$=IntervalYearMonth
+  }
+
+interval_time_stamp:
+ DAY
+  {
+ 	$$=IntervalDay
+  }
+| WEEK
+  {
+  	$$=IntervalWeek
+  }
+| HOUR
+  {
+ 	$$=IntervalHour
+  }
+| MINUTE
+  {
+ 	$$=IntervalMinute
+  }
+| MONTH
+  {
+	$$=IntervalMonth
+  }
+| QUARTER
+  {
+	$$=IntervalQuarter
+  }
+| SECOND
+  {
+	$$=IntervalSecond
+  }
+| MICROSECOND
+  {
+	$$=IntervalMicrosecond
+  }
+| YEAR
+  {
+	$$=IntervalYear
+  }
 
 func_datetime_precision_opt:
   /* empty */
@@ -3400,6 +3495,24 @@ non_reserved_keyword:
 | WRITE
 | YEAR
 | ZEROFILL
+| DAY
+| DAY_HOUR
+| DAY_MICROSECOND
+| DAY_MINUTE
+| DAY_SECOND
+| HOUR
+| HOUR_MICROSECOND
+| HOUR_MINUTE
+| HOUR_SECOND
+| MICROSECOND
+| MINUTE
+| MINUTE_MICROSECOND
+| MINUTE_SECOND
+| MONTH
+| QUARTER
+| SECOND
+| SECOND_MICROSECOND
+| YEAR_MONTH
 
 // Reserved keywords that cause grammar conflicts in some places, but are safe to use as column name / alias identifiers.
 // These keywords should also go in reserved_keyword.

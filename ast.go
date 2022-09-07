@@ -2036,6 +2036,7 @@ func (ListArg) iExpr()           {}
 func (*BinaryExpr) iExpr()       {}
 func (*UnaryExpr) iExpr()        {}
 func (*IntervalExpr) iExpr()     {}
+func (*ExtractFuncExpr) iExpr()  {}
 func (*CollateExpr) iExpr()      {}
 func (*FuncExpr) iExpr()         {}
 func (*CaseExpr) iExpr()         {}
@@ -2921,7 +2922,7 @@ type ConvertExpr struct {
 
 // Format formats the node.
 func (node *ConvertExpr) Format(buf *TrackedBuffer) {
-	buf.Myprintf("convert(%v, %v)", node.Expr, node.Type)
+	buf.Myprintf("cast(%v as %v)", node.Expr, node.Type)
 }
 
 func (node *ConvertExpr) walkSubtree(visit Visit) error {
@@ -2936,6 +2937,128 @@ func (node *ConvertExpr) walkSubtree(visit Visit) error {
 }
 
 func (node *ConvertExpr) replace(from, to Expr) bool {
+	return replaceExprs(from, to, &node.Expr)
+}
+
+// IntervalTypes is an enum to get types of intervals
+type IntervalTypes int8
+
+const ( // IntervalTypes strings
+	DayStr               = "day"
+	WeekStr              = "week"
+	MonthStr             = "month"
+	YearStr              = "year"
+	DayHourStr           = "day_hour"
+	DayMicrosecondStr    = "day_microsecond"
+	DayMinuteStr         = "day_minute"
+	DaySecondStr         = "day_second"
+	HourStr              = "hour"
+	HourMicrosecondStr   = "hour_microsecond"
+	HourMinuteStr        = "hour_minute"
+	HourSecondStr        = "hour_second"
+	MicrosecondStr       = "microsecond"
+	MinuteStr            = "minute"
+	MinuteMicrosecondStr = "minute_microsecond"
+	MinuteSecondStr      = "minute_second"
+	QuarterStr           = "quarter"
+	SecondStr            = "second"
+	SecondMicrosecondStr = "second_microsecond"
+	YearMonthStr         = "year_month"
+)
+
+const (
+	IntervalYear IntervalTypes = iota
+	IntervalQuarter
+	IntervalMonth
+	IntervalWeek
+	IntervalDay
+	IntervalHour
+	IntervalMinute
+	IntervalSecond
+	IntervalMicrosecond
+	IntervalYearMonth
+	IntervalDayHour
+	IntervalDayMinute
+	IntervalDaySecond
+	IntervalHourMinute
+	IntervalHourSecond
+	IntervalMinuteSecond
+	IntervalDayMicrosecond
+	IntervalHourMicrosecond
+	IntervalMinuteMicrosecond
+	IntervalSecondMicrosecond
+)
+
+// ToString returns the type as a string
+func (ty IntervalTypes) ToString() string {
+	switch ty {
+	case IntervalYear:
+		return YearStr
+	case IntervalQuarter:
+		return QuarterStr
+	case IntervalMonth:
+		return MonthStr
+	case IntervalWeek:
+		return WeekStr
+	case IntervalDay:
+		return DayStr
+	case IntervalHour:
+		return HourStr
+	case IntervalMinute:
+		return MinuteStr
+	case IntervalSecond:
+		return SecondStr
+	case IntervalMicrosecond:
+		return MicrosecondStr
+	case IntervalYearMonth:
+		return YearMonthStr
+	case IntervalDayHour:
+		return DayHourStr
+	case IntervalDayMinute:
+		return DayMinuteStr
+	case IntervalDaySecond:
+		return DaySecondStr
+	case IntervalHourMinute:
+		return HourMinuteStr
+	case IntervalHourSecond:
+		return HourSecondStr
+	case IntervalMinuteSecond:
+		return MinuteSecondStr
+	case IntervalDayMicrosecond:
+		return DayMicrosecondStr
+	case IntervalHourMicrosecond:
+		return HourMicrosecondStr
+	case IntervalMinuteMicrosecond:
+		return MinuteMicrosecondStr
+	case IntervalSecondMicrosecond:
+		return SecondMicrosecondStr
+	default:
+		return "Unknown IntervalType"
+	}
+}
+
+// ExtractFuncExpr represents the function and arguments for EXTRACT(YEAR FROM '2019-07-02') type functions.
+type ExtractFuncExpr struct {
+	Expr          Expr
+	IntervalTypes IntervalTypes
+}
+
+// Format formats the node.
+func (node *ExtractFuncExpr) Format(buf *TrackedBuffer) {
+	buf.Myprintf("extract(%s from %v)", node.IntervalTypes.ToString(), node.Expr)
+}
+
+func (node *ExtractFuncExpr) walkSubtree(visit Visit) error {
+	if node == nil {
+		return nil
+	}
+	return Walk(
+		visit,
+		node.Expr,
+	)
+}
+
+func (node *ExtractFuncExpr) replace(from, to Expr) bool {
 	return replaceExprs(from, to, &node.Expr)
 }
 
