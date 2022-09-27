@@ -301,11 +301,17 @@ func (node *Select) Format(buf *TrackedBuffer) {
 		buf.Myprintf(" ")
 	}
 
-	buf.Myprintf("select %v%s%s%s%v from %v%v%v%v%v%v%s",
-		node.Comments, node.Cache, node.Distinct, node.Hints, node.SelectExprs,
-		node.From, node.Where,
-		node.GroupBy, node.Having, node.OrderBy,
-		node.Limit, node.Lock)
+	if len(node.From) == 0 {
+		buf.Myprintf("select %v%s%s%s%v",
+			node.Comments, node.Cache, node.Distinct, node.Hints, node.SelectExprs)
+	} else {
+
+		buf.Myprintf("select %v%s%s%s%v from %v%v%v%v%v%v%s",
+			node.Comments, node.Cache, node.Distinct, node.Hints, node.SelectExprs,
+			node.From, node.Where,
+			node.GroupBy, node.Having, node.OrderBy,
+			node.Limit, node.Lock)
+	}
 }
 
 func (node *Select) walkSubtree(visit Visit) error {

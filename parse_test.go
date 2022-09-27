@@ -29,7 +29,7 @@ var (
 		output string
 	}{{
 		input:  "select 1",
-		output: "select 1 from dual",
+		output: "select 1",
 	}, {
 		input: "select 1 from t",
 	}, {
@@ -525,13 +525,13 @@ var (
 	}, {
 		input: "select /* interval keyword */ adddate('2008-01-02', interval 1 year) from t",
 	}, {
-		input: "select /* dual */ 1 from dual",
+		input: "select /* dual */ 1",
 	}, {
-		input:  "select /* Dual */ 1 from Dual",
-		output: "select /* Dual */ 1 from dual",
+		input:  "select /* Dual */ 1",
+		output: "select /* Dual */ 1",
 	}, {
-		input:  "select /* DUAL */ 1 from Dual",
-		output: "select /* DUAL */ 1 from dual",
+		input:  "select /* DUAL */ 1",
+		output: "select /* DUAL */ 1",
 	}, {
 		input: "select /* column as bool in where */ a from t where b",
 	}, {
@@ -564,7 +564,7 @@ var (
 		input:  "select /*!401011 from*/ t",
 		output: "select 1 from t",
 	}, {
-		input: "select /* dual */ 1 from dual",
+		input: "select /* dual */ 1",
 	}, {
 		input: "insert /* simple */ into a values (1)",
 	}, {
@@ -1233,8 +1233,8 @@ var (
 		input:  "select k collate 'latin1_german2_ci' as k1 from t1 order by k1 asc",
 		output: "select k collate latin1_german2_ci as k1 from t1 order by k1 asc",
 	}, {
-		input:  "select /* drop trailing semicolon */ 1 from dual;",
-		output: "select /* drop trailing semicolon */ 1 from dual",
+		input:  "select /* drop trailing semicolon */ 1;",
+		output: "select /* drop trailing semicolon */ 1",
 	}, {
 		input: "select /* cache directive */ sql_no_cache 'foo' from t",
 	}, {
@@ -1261,7 +1261,7 @@ var (
 	}, {
 		input: "select e.id, s.city from employees as e join stores partition (p1) as s on e.store_id = s.id",
 	}, {
-		input: "select truncate(120.3333, 2) from dual",
+		input: "select truncate(120.3333, 2)",
 	}, {
 		input: "update t partition (p0) set a = 1",
 	}, {
@@ -1440,7 +1440,7 @@ func TestKeywords(t *testing.T) {
 		output string
 	}{{
 		input:  "select current_timestamp",
-		output: "select current_timestamp() from dual",
+		output: "select current_timestamp()",
 	}, {
 		input: "update t set a = current_timestamp()",
 	}, {
@@ -1456,7 +1456,7 @@ func TestKeywords(t *testing.T) {
 		output: "update t set b = utc_timestamp() + 5",
 	}, {
 		input:  "select utc_time, utc_date",
-		output: "select utc_time(), utc_date() from dual",
+		output: "select utc_time(), utc_date()",
 	}, {
 		input:  "select 1 from dual where localtime > utc_time",
 		output: "select 1 from dual where localtime() > utc_time()",
